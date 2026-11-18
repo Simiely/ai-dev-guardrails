@@ -8,7 +8,8 @@ from typing import Any
 from .graph import build_graph
 from .util import GuardrailsError, normalize_path, read_text, sha256_text, write_text
 
-LOCK_PATH = ".guardrails/test-locks.json"
+LOCK_DIR = ".guardrails/test-locks"
+LEGACY_LOCK_PATH = ".guardrails/test-locks.json"
 APPROVAL_DIR = ".guardrails/test-approvals"
 
 
@@ -18,6 +19,20 @@ def _now() -> str:
 
 def _hash(path: Path) -> str:
     return "sha256:" + sha256_text(read_text(path))
+
+
+def lock_path(root: Path, task: str) -> Path:
+    return root / LOCK_DIR / f"{task}.json"
+
+
+def _read_lock(path: Path) -> dict[str, Any] | None:
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(read_text(path))
+    except json.JSONDecodeError:
+        return None
+    return data if isinstance(data, dict) else None
 
 
 def _discover_tests(root: Path, config: dict[str, Any]) -> list[str]:
@@ -50,15 +65,35 @@ def lock_tests(
         "locked_at": _now(),
         "files": locked,
     }
-    write_text(root / LOCK_PATH, json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True))
+    path = lock_path(root, task)
+    write_text(path, json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True))
+
+    legacy = root / LEGACY_LOCK_PATH
+    legacy_data = _read_lock(legacy)
+    if legacy_data is not None and str(legacy_data.get("task") or "") == task:
+        legacy.unlink()
+
     approval = root / APPROVAL_DIR / f"{task}.json"
     if approval.exists():
         approval.unlink()
-    return {"task": task, "locked": len(locked), "path": LOCK_PATH}
+    return {
+        "task": task,
+        "locked": len(locked),
+        "path": normalize_path(str(path.relative_to(root))),
+    }
 
 
 def check_tests(root: Path, task: str) -> dict[str, Any]:
-    path = root / LOCK_PATH
+    path = lock_path(root, task)
+    legacy_task: str | None = None
+    if not path.exists():
+        legacy = root / LEGACY_LOCK_PATH
+        legacy_data = _read_lock(legacy)
+        if legacy_data is not None:
+            legacy_task = str(legacy_data.get("task") or "")
+            if legacy_task == task:
+                path = legacy
+
     if not path.exists():
         return {
             "task": task,
@@ -68,9 +103,27 @@ def check_tests(root: Path, task: str) -> dict[str, Any]:
             "missing": [],
             "approved": False,
             "needs_relock": False,
+            "legacy_task": legacy_task,
         }
-    data = json.loads(read_text(path))
+
+    data = _read_lock(path)
+    if data is None:
+        return {
+            "task": task,
+            "locked": False,
+            "ok": False,
+            "changed": [],
+            "missing": [],
+            "approved": False,
+            "needs_relock": False,
+            "error": f"invalid lock file: {path}",
+            "legacy_task": legacy_task,
+        }
+
+    lock_task = str(data.get("task") or task)
     locked = data.get("files", {})
+    if not isinstance(locked, dict):
+        locked = {}
     current = {}
     for item in locked:
         file_path = root / item
@@ -80,15 +133,17 @@ def check_tests(root: Path, task: str) -> dict[str, Any]:
     missing = sorted(item for item in locked if item not in current)
     approval = root / APPROVAL_DIR / f"{task}.json"
     approved = approval.exists()
-    ok = not changed and not missing
+    ok = lock_task == task and not changed and not missing
     return {
         "task": task,
         "locked": True,
+        "lock_task": lock_task,
         "ok": ok,
         "changed": changed,
         "missing": missing,
         "approved": approved,
         "needs_relock": bool(changed and approved),
+        "legacy_task": legacy_task,
     }
 
 
@@ -103,12 +158,34 @@ def approve_tests(root: Path, task: str, reason: str) -> dict[str, Any]:
     return {"task": task, "approved": True, "reason": reason}
 
 
+def _lock_entries(root: Path) -> list[tuple[str, dict[str, str]]]:
+    entries: list[tuple[str, dict[str, str]]] = []
+    lock_dir = root / LOCK_DIR
+    if lock_dir.exists():
+        for path in sorted(lock_dir.glob("*.json")):
+            data = _read_lock(path)
+            if data is None:
+                continue
+            files = data.get("files", {})
+            if isinstance(files, dict):
+                entries.append((str(data.get("task") or path.stem), files))
+    legacy_data = _read_lock(root / LEGACY_LOCK_PATH)
+    if legacy_data is not None:
+        files = legacy_data.get("files", {})
+        if isinstance(files, dict):
+            entries.append((str(legacy_data.get("task") or "legacy"), files))
+    return entries
+
+
+def locked_tasks_for(root: Path, path: str) -> list[str]:
+    normalized = normalize_path(path)
+    tasks: list[str] = []
+    for task, files in _lock_entries(root):
+        if normalized in files and task not in tasks:
+            tasks.append(task)
+    return tasks
+
+
 def locked_test_for(root: Path, path: str) -> str | None:
-    """Return the task id if the path is locked, else None."""
-    lock_path = root / LOCK_PATH
-    if not lock_path.exists():
-        return None
-    data = json.loads(read_text(lock_path))
-    task = str(data.get("task", ""))
-    files = data.get("files", {})
-    return task if normalize_path(path) in files else None
+    tasks = locked_tasks_for(root, path)
+    return tasks[0] if tasks else None

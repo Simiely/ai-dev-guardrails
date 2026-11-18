@@ -573,12 +573,18 @@ def cmd_test_check(root: Path, args: argparse.Namespace) -> int:
     if args.json:
         _print_json(result)
     else:
+        if result.get("legacy_task") and not result["locked"]:
+            print(f"- note: legacy lock belongs to task {result['legacy_task']!r}; ignored")
+        if result.get("error"):
+            print(f"- error: {result['error']}")
         if not result["locked"]:
             print(f"TEST CHECK: no lock for task {result['task']} (PASS)")
         elif result["ok"]:
             print(f"TEST CHECK: PASS (task {result['task']})")
         else:
             print(f"TEST CHECK: FAIL (task {result['task']})")
+            if result.get("lock_task") and result["lock_task"] != result["task"]:
+                print(f"- lock file task mismatch: {result['lock_task']!r}")
             for item in result["changed"]:
                 print(f"- changed: {item}")
             for item in result["missing"]:

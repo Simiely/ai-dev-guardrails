@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .custody import LEGACY_LOCK_PATH, LOCK_DIR
 from .graph import build_graph
 from .manual import load_card, load_chapters
 from .metrics import metrics_report
@@ -19,10 +20,21 @@ def build_report(root: Path, config: dict[str, Any]) -> dict[str, Any]:
     if contracts_dir.exists():
         snapshots = sorted(path.name for path in contracts_dir.glob("*.json"))
 
-    locks = {}
-    lock_path = root / ".guardrails" / "test-locks.json"
-    if lock_path.exists():
-        locks = json.loads(read_text(lock_path)).get("files", {})
+    locks: dict[str, str] = {}
+    lock_dir = root / LOCK_DIR
+    if lock_dir.exists():
+        for path in sorted(lock_dir.glob("*.json")):
+            data = json.loads(read_text(path))
+            files = data.get("files", {}) if isinstance(data, dict) else {}
+            if isinstance(files, dict):
+                locks.update(files)
+    legacy = root / LEGACY_LOCK_PATH
+    if legacy.exists():
+        data = json.loads(read_text(legacy))
+        files = data.get("files", {}) if isinstance(data, dict) else {}
+        if isinstance(files, dict):
+            for key, value in files.items():
+                locks.setdefault(key, value)
 
     tasks = []
     specs_dir = root / "specs"

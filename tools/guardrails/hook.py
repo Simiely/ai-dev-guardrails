@@ -4,8 +4,8 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .custody import APPROVAL_DIR, locked_test_for
-from .util import matches_any, normalize_path, read_text
+from .custody import APPROVAL_DIR, locked_tasks_for
+from .util import matches_any, normalize_path
 
 DANGEROUS = [
     r"\brm\s+-rf\b",
@@ -40,20 +40,27 @@ def evaluate_pre_tool(root: Path, config: dict[str, Any], payload: dict[str, Any
                 "decision": "deny",
                 "reason": f"protected path: {normalized}. Change it via ADR + human approval.",
             }
-        locked_task = locked_test_for(root, normalized)
-        if locked_task:
-            approval = root / APPROVAL_DIR / f"{locked_task}.json"
-            if not approval.exists():
+        locked_tasks = locked_tasks_for(root, normalized)
+        if locked_tasks:
+            missing = [
+                task
+                for task in locked_tasks
+                if not (root / APPROVAL_DIR / f"{task}.json").exists()
+            ]
+            if missing:
                 return {
                     "decision": "deny",
                     "reason": (
-                        f"test file is locked for task {locked_task!r}: {normalized}. "
-                        f"Run `guardrails test-approve --task {locked_task} --reason '...'` first."
+                        f"test file is locked for task(s) {', '.join(missing)}: {normalized}. "
+                        "Run `guardrails test-approve --task <id> --reason '...'` for each task first."
                     ),
                 }
             return {
                 "decision": "allow",
-                "reason": f"test change approved for task {locked_task!r}; re-lock after editing.",
+                "reason": (
+                    f"test change approved for task(s) {', '.join(locked_tasks)}; "
+                    "re-lock after editing."
+                ),
             }
         return {"decision": "allow", "reason": f"not protected: {normalized}"}
 
@@ -84,13 +91,3 @@ def session_start_text(root: Path) -> str:
         "`guardrails brief --task specs/<id>` and load only the selected 1-3 chapters. "
         "Do not read the whole manual/. After compaction, restore only the card + current chapter + state.json."
     )
-
-
-def test_locks(root: Path) -> dict[str, str]:
-    path = root / ".guardrails" / "test-locks.json"
-    if not path.exists():
-        return {}
-    import json
-
-    data = json.loads(read_text(path))
-    return data if isinstance(data, dict) else {}
