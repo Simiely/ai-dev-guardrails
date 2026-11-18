@@ -18,8 +18,10 @@ npx depcruise --config .guardrails/dependency-cruiser.js src
 lint-imports
 ```
 
+包名不是 `<project>.<layer>` 时，在 `guardrails.yaml` 的 `project.python` 里配置 `root_package` 和 `layer_packages`。
+
 ## 规则
 
 - 层之间只允许从高到低依赖；反向依赖失败。
 - 禁止循环依赖。
-- 跨模块只能 import 对方的 `CONTRACT`，不能 import 内部文件。
+- 跨模块只能 import 对方的 `public_path`；未配置时默认 `CONTRACT.*`、`index.*` 或 `public/`。

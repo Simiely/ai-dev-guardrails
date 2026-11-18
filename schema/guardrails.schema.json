@@ -17,6 +17,17 @@
           "type": "array",
           "items": { "type": "string" },
           "uniqueItems": true
+        },
+        "python": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "root_package": { "type": "string", "minLength": 1 },
+            "layer_packages": {
+              "type": "object",
+              "additionalProperties": { "type": "string", "minLength": 1 }
+            }
+          }
         }
       }
     },
@@ -38,6 +49,7 @@
           "layer": { "type": "string", "minLength": 1 },
           "owner": { "type": "string" },
           "contract": { "type": "string" },
+          "public_path": { "type": "string" },
           "depends_on": {
             "type": "array",
             "items": { "type": "string" },

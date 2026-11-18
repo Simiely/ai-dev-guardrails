@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## v0.6.2 — 2026-11-18
+
+### 架构规则
+
+- `project.python.root_package` / `layer_packages`：import-linter 不再假设 `<name>.<layer>` 包结构。
+- `modules[].public_path`：跨模块只允许 import 显式公共入口；未配置时默认 `CONTRACT.*`、`index.*` 或 `public/`。
+- 收紧 dependency-cruiser 的 `pathNot`，不再放行任意包含 `CONTRACT` 的路径。
+- `render_architecture_readme` 同步说明 `public_path` 和 Python 包映射。
+
+### 测试
+
+- 新增 public_path、Python 包映射、schema 校验测试；共 95 个测试。
+
 ## v0.6.1 — 2026-11-18
 
 ### 测试托管

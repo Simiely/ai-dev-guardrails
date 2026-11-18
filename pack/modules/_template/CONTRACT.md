@@ -1,6 +1,7 @@
 # 契约：<name>
 
-> 其他模块只能通过本文件描述的接口使用本模块。
+> 本文件只描述对外承诺；其他模块只能通过 `guardrails.yaml` 里的 `public_path` 使用本模块。
+> 未配置 `public_path` 时，默认允许 `CONTRACT.*`、`index.*` 或 `public/`。
 > 修改本文件 = 契约变更 = R3 = ADR + 人批 + 契约快照 diff。
 
 ## 对外接口

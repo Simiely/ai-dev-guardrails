@@ -5,6 +5,13 @@ version: 1
 project:
   name: example
   languages: [typescript, python]
+  # Python 包名不是 <name>.<layer> 时配置：
+  # python:
+  #   root_package: app
+  #   layer_packages:
+  #     domain: app.domain
+  #     application: app.application
+  #     adapter: app.adapter
 
 # 依赖只允许从左往右；禁止反向依赖与循环依赖。
 layers:
@@ -20,6 +27,7 @@ modules: []
 #     layer: application
 #     owner: "@owner"
 #     contract: modules/order/CONTRACT.md
+#     public_path: modules/order/CONTRACT.ts
 #     depends_on: [payment]
 #     public_api: [OrderService.cancel]
 

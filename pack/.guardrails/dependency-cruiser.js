@@ -5,7 +5,7 @@ module.exports = {
     { name: "no-domain-to-application", severity: "error", from: { path: "^(modules/domain)/" }, to: { path: "^(modules/application)/" } },
     { name: "no-domain-to-adapter", severity: "error", from: { path: "^(modules/domain)/" }, to: { path: "^(modules/adapter)/" } },
     { name: "no-application-to-adapter", severity: "error", from: { path: "^(modules/application)/" }, to: { path: "^(modules/adapter)/" } },
-    { name: "no-cross-module-internal", severity: "error", from: { path: "^modules/([^/]+)/" }, to: { path: "^modules/(?!$1)/", pathNot: "CONTRACT" } }
+    { name: "no-cross-module-internal", severity: "error", from: { path: "^modules/([^/]+)/" }, to: { path: "^modules/(?!$1)/", pathNot: "^modules/[^/]+/(CONTRACT|index)\\.(ts|tsx|js|jsx|py)$" } }
   ],
   options: { doNotFollow: { path: "node_modules" }, tsPreCompilationDeps: true },
 };
