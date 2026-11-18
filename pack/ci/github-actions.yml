@@ -1,0 +1,40 @@
+name: gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # TODO: 换成你的安装命令（npm ci / pip install -e . / mvn -q -DskipTests package）
+      - name: Setup
+        run: echo "TODO: install dependencies"
+
+      # TODO: 只跑与本次改动相关的测试
+      - name: Affected tests
+        run: echo "TODO: run affected tests"
+
+      # TODO: 全量回归
+      - name: Full tests
+        run: echo "TODO: run full test suite"
+
+      # TODO: 类型检查
+      - name: Typecheck
+        run: echo "TODO: run typecheck"
+
+      # TODO: lint
+      - name: Lint
+        run: echo "TODO: run lint"
+
+      # TODO: 依赖方向 / 循环依赖 / 未登记模块（见 ci/README.md）
+      - name: Architecture rules
+        run: echo "TODO: run architecture checks"
+
+      # TODO: spec 与 code 一致性检查
+      - name: Spec drift
+        run: echo "TODO: run spec drift check"
