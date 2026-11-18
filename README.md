@@ -1,89 +1,155 @@
 # ai-dev-guardrails
 
-> 一套让 AI 在边界内自由发挥、程序长期稳定的开发框架与可复制模板包。
+> 一个 agent 原生的**架构契约层**：把模块边界、依赖方向、公共契约和风险分级变成可生成的 lint 配置、显式路由和 CI 门禁。
 
-## 这是什么
+它不试图做“AI 开发总框架”。它只做现有工具都没做好的那一层：
 
-AI 编程的问题不是单次写不对，而是**长期迭代必然退化**：结构侵蚀、架构漂移、重复代码、死代码堆积。
-
-这个仓库给出一个结构性解法：
-
-- **上轨**：架构宪法（`ARCHITECTURE.md`），人定，AI 不得自改
-- **中区**：制品链 `intent → spec → plan → code + tests`，AI 自由发挥
-- **下轨**：机器门禁（测试、类型、lint、依赖方向、spec 漂移），判定是否算做对了
+- **架构契约**：`guardrails.yaml` 是模块、层、依赖、契约、风险的唯一机器源。
+- **手册编译器**：`manual/00-card.md` + 6 个章节，生成 AGENTS / Claude / Kiro / Cursor 视图。
+- **显式路由**：`guardrails brief` 只选 1–3 个章节，不让 AI 自己翻目录。
+- **证据门禁**：契约快照 diff、风险分级、章节 lint、routing eval、doctor。
 
 ## 30 秒理解
 
 | 你遇到的问题 | 对应机制 |
 |---|---|
-| 越改越漂 | 架构宪法 + spec/code 同提交 + 漂移门禁 |
-| 主逻辑不清晰 | `FLOW.md` 强制写主流程、分支表、失败路径 |
-| 没有模块化 | `registry.yaml` + 只允许 import 契约 |
-| 稳定性差 | 失败测试先行 + 受影响测试 + 四道门 |
+| 越改越漂 | `guardrails.yaml` 生成依赖规则；契约快照 diff 阻断破坏性变更 |
+| 主逻辑不清晰 | 6 个章节按工作阶段拆分，每任务只加载 2–3 个 |
+| 没有模块化 | 模块登记 + 只允许 import `CONTRACT` |
+| 上下文太长被压缩 | 常驻卡 ≤80 行；压缩后只恢复卡 + 当前章节 + `state.json` |
+| AI 不加载该看的规则 | 显式 `guardrails brief` 预选，不依赖隐式路由 |
+| 规则越写越厚 | 章节上限 6 个；`lint-manual` 抓臃肿、弱路由、重复、条件句 |
 | 死代码多 | 三证删除规则：静态无引用 + 运行时无注册 + 测试不依赖 |
+
+## 不是什么
+
+- 不是通用 agent runtime：运行时策略交给 Claude Code hooks / Microsoft AGT / Caper。
+- 不是 spec 状态机：spec→人批→red→green 交给 SpecGuard 或等价工具。
+- 不是通用代码图：检索交给 Serena / CodeGraph 等 MCP。
+- 不强制所有任务写全套 SDD：只对 feature、data pipeline、3+ 文件、高代价改动。
 
 ## 快速开始
 
-### 1. 复制模板包
+```bash
+# 1. 安装 CLI（本地开发用 -e）
+python -m pip install -e /path/to/ai-dev-guardrails
 
-把 `pack/` 里的内容复制到你的项目根目录。已有 `README.md` 就不要覆盖。
+# 2. 复制模板包到项目
+guardrails init --target .
 
-### 2. 填三个地方
+# 3. 填 guardrails.yaml：modules / contracts / risk / commands
+# 4. 改 manual/00-card.md 和 manual/chapters/*/SKILL.md
 
-1. `ARCHITECTURE.md` 第 2 节：模块清单和依赖方向
-2. `ARCHITECTURE.md` 第 7 节：真实验证命令
-3. `registry.yaml`：模块登记
-
-### 3. 建第一个模块和任务
-
-```powershell
-.\scripts\new-module.ps1 -Name order
-.\scripts\new-task.ps1 -Id order-cancel -Title "订单取消" -Tier T2
+# 5. 校验与生成
+guardrails lint-manual
+guardrails sync
+guardrails doctor
 ```
 
-### 4. 让 AI 开工
+给 AI 的第一句话：
 
 ```text
-读 docs/EXECUTION.md，之后所有任务按它执行。
-动手前先输出任务分级和上下文清单。
+先读 AGENTS.md。每个任务先跑 guardrails brief --task specs/<id>，
+只加载它选中的 1–3 个章节，不要一次读完 manual/。
 ```
+
+## 常用命令
+
+| 命令 | 作用 |
+|---|---|
+| `guardrails init` | 复制 `pack/` 到项目 |
+| `guardrails lint-manual` | 校验常驻卡和 6 个章节 |
+| `guardrails brief --task specs/<id>` | 选 1–3 个章节，输出 manifest 和 token 预算 |
+| `guardrails eval-routing` | 测 routing recall / zero-load / over-load |
+| `guardrails sync` | 生成 AGENTS / Claude / Kiro / Cursor 视图 + `.guardrails/` 架构规则 |
+| `guardrails sync --check` | CI 检查生成视图/规则是否过期 |
+| `guardrails affected --diff` | 源码↔测试图，列出受影响测试 |
+| `guardrails test-lock --task <id>` | red 后锁定测试文件 |
+| `guardrails test-check --task <id>` | 检查测试是否被改动 |
+| `guardrails test-approve --task <id> --reason ...` | 批准测试改动，改完重新 lock |
+| `guardrails quality --diff --fail-on` | 复杂度、函数长度、重复块 |
+| `guardrails mutation --diff` | 只对改动文件跑项目 mutation 命令 |
+| `guardrails state init/show/next/handoff` | 任务状态与压缩恢复 |
+| `guardrails report` | 结构信号 + 本地运行指标 |
+| `guardrails metrics record/ingest-junit/report` | 记录运行结果、导入 JUnit、看通过率/失败率/返工率 |
+| `guardrails canary` | 跑 canary 套件，对比基线，识别回归 |
+| `guardrails card --task <id>` | 生成后果卡 |
+| `guardrails contract snapshot/diff` | 契约快照与破坏性变更检测 |
+| `guardrails risk --diff` | R0–R3 风险分级 |
+| `guardrails doctor` | 检查配置、手册、视图、命令、CI、hooks |
+| `guardrails hook --event pre-tool` | Claude Code hook：拦截保护路径、锁定测试和破坏性命令 |
+| `guardrails run <name>` | 跑 `guardrails.yaml` 里的真实命令 |
+
+## 手册模型
+
+```text
+manual/
+├── 00-card.md                 # 常驻：目标、红线、路由表、状态、命令（≤80 行）
+└── chapters/
+    ├── intake/SKILL.md        # 分类 / 风险 / 预算
+    ├── context/SKILL.md       # 最小上下文 / manifest
+    ├── change/SKILL.md        # intent / spec / plan / trace
+    ├── tdd/SKILL.md           # 红-绿-重构 / 测试托管
+    ├── verify/SKILL.md        # 门禁 / 契约 diff / 风险
+    └── review/SKILL.md        # 后果卡 / ADR / 回滚 / 发布
+```
+
+规则：
+
+- 章节上限 6 个；每任务加载上限 3 个。
+- 每个章节必须有 `description`、`when_to_use`、`when_not_to_use`。
+- 每个章节有 token 预算；超预算就拆到 `references/` 或删。
+- 常驻卡不放流程，只放红线、路由和命令。
 
 ## 仓库结构
 
 ```text
 ai-dev-guardrails/
 ├── README.md            门面
-├── AGENTS.md            AI / 维护者入口（生成）
-├── DEVELOPMENT.md       本仓库的架构与关键问题
-├── CHANGELOG.md         版本历史
-├── docs/                方法论文档（frontmatter + 生成索引 + 新鲜度）
-├── pack/                可复制的模板包（不参与本仓库文档检查）
-├── schema/              内容契约与词表
-└── tools/repo-kit/      机器层：检查与生成
+├── AGENTS.md            本仓库维护规则
+├── DEVELOPMENT.md       本仓库架构与关键问题
+├── docs/                方法论文档（frontmatter + 生成索引）
+├── pack/                可复制模板包
+│   ├── manual/          常驻卡 + 6 个章节（唯一源）
+│   ├── guardrails.yaml  架构契约配置
+│   ├── eval/routing/    routing 基准
+│   └── ci/gates.yml     真实 CI 门禁
+├── schema/              内容契约与配置 schema
+├── tools/guardrails/    CLI：lint / brief / sync / contract / risk / doctor
+└── tools/repo-kit/      文档检查与生成
 ```
-
-## 文档
-
-- [使用指南](docs/使用指南.md) — 从安装到第一个任务的完整走查
-- [框架设计](docs/框架设计.md) — 为什么这样分层，以及证据边界
-- [执行说明](pack/docs/EXECUTION.md) — 给 AI 的操作手册
-- [开发说明](DEVELOPMENT.md) — 本仓库的架构与关键问题
-- [变更记录](CHANGELOG.md)
 
 ## 验证
 
 ```bash
 python -m pip install -r requirements.txt
+python -m pip install -e .
+python -m pytest -q
+guardrails --root pack lint-manual
+guardrails --root pack sync --check
+guardrails --root pack eval-routing
 python tools/repo-kit/check_repo.py --root .
 python tools/repo-kit/generate.py --root . --check
 pwsh tools/update-repo-kit.ps1 -Check
 ```
 
-四条全绿才算整理完。
+全部通过才算整理完。
 
 ## 边界
 
 - 不适合一次性脚本、纯探索原型、需求还不存在的阶段。
-- 机器层只保结构、链接、真源与新鲜度；内容对不对靠人审。
-- `pack/` 是产物目录，不参与本仓库的 frontmatter 检查；它的正确性靠真实项目使用验证。
+- 机器层只保结构、链接、路由、生成物与新鲜度；内容对不对靠人审。
+- `pack/` 的正确性靠 smoke test + 真实项目使用验证。
 - 框架不能保证不出 bug，只能让错误在合并前暴露、在架构上留痕。
+
+## 证据
+
+设计与证据边界见 [框架设计](docs/框架设计.md)。关键来源：
+
+- [Lost in Implicit Routing](https://arxiv.org/abs/2610.18522)
+- [SkillsBench](https://arxiv.org/abs/2602.12670)
+- [What Keeps Agent Skills from Being Reusable?](https://arxiv.org/abs/2608.08453)
+- [SkillJuror](https://arxiv.org/abs/2606.11543)
+- [Guardrails Beat Guidance](https://arxiv.org/abs/2604.11088)
+- [TDAD](https://arxiv.org/abs/2603.17973)
+- [SpecBench](https://arxiv.org/abs/2605.21384)

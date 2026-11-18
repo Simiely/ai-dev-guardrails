@@ -1,0 +1,7 @@
+id: docs
+task:
+  type: docs
+  files:
+    - docs/readme.md
+expect:
+  - verify

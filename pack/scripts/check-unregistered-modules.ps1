@@ -1,10 +1,10 @@
 ﻿$ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
-$registry = Join-Path $root 'registry.yaml'
+$registry = Join-Path $root 'guardrails.yaml'
 $modulesDir = Join-Path $root 'modules'
 
-if (-not (Test-Path $registry)) { Write-Error "找不到 registry.yaml: $registry" }
+if (-not (Test-Path $registry)) { Write-Error "找不到 guardrails.yaml: $registry" }
 if (-not (Test-Path $modulesDir)) { Write-Error "找不到 modules 目录: $modulesDir" }
 
 $registered = @(

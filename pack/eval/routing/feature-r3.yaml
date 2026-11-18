@@ -1,0 +1,10 @@
+id: feature-r3
+task:
+  type: feature
+  files:
+    - modules/order/src/cancel.ts
+    - openapi/order.yaml
+expect:
+  - change
+  - review
+  - verify

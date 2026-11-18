@@ -3,8 +3,8 @@
     [string]$Id,
     [Parameter(Mandatory = $true)]
     [string]$Title,
-    [ValidateSet('T0', 'T1', 'T2', 'T3')]
-    [string]$Tier = 'T1'
+    [ValidateSet('R0', 'R1', 'R2', 'R3')]
+    [string]$Tier = 'R1'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -15,8 +15,8 @@ $target = Join-Path $root "specs/$Id"
 if (Test-Path $target) { Write-Error "任务已存在: $target" }
 
 $files = switch ($Tier) {
-    'T0' { @('plan') }
-    'T1' { @('intent', 'spec') }
+    'R0' { @('plan') }
+    'R1' { @('intent', 'spec') }
     default { @('intent', 'spec', 'plan') }
 }
 
@@ -35,4 +35,4 @@ foreach ($f in $files) {
 
 Write-Host "已创建任务: specs/$Id ($Tier)"
 Get-ChildItem $target | ForEach-Object { Write-Host "  - $($_.Name)" }
-Write-Host "下一步：按 docs/EXECUTION.md 执行，先确认分级和上下文清单。"
+Write-Host "下一步：运行 guardrails brief --task specs/$Id，只加载它选中的章节。"

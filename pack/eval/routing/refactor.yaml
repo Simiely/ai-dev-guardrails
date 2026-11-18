@@ -1,0 +1,8 @@
+id: refactor
+task:
+  type: refactor
+  files:
+    - modules/order/src/cancel.ts
+expect:
+  - change
+  - verify

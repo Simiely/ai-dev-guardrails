@@ -1,0 +1,6 @@
+name: default
+commands:
+  - id: routing
+    run: "guardrails eval-routing"
+  - id: manual-lint
+    run: "guardrails lint-manual"

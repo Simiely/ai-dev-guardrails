@@ -1,0 +1,64 @@
+name: gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install guardrails
+        run: python -m pip install "git+https://github.com/Simiely/ai-dev-guardrails.git"
+
+      - name: Manual lint
+        run: guardrails lint-manual
+
+      - name: Generated views and architecture rules are up to date
+        run: guardrails sync --check
+
+      # 启用实际架构检查（二选一）：
+      # - name: Architecture rules (TypeScript)
+      #   run: npx depcruise --config .guardrails/dependency-cruiser.js .
+      # - name: Architecture rules (Python)
+      #   run: lint-imports
+
+      - name: Affected map
+        run: guardrails affected --diff --base origin/${{ github.base_ref || 'main' }}
+
+      - name: Quality sensors
+        run: guardrails quality --diff --base origin/${{ github.base_ref || 'main' }} --fail-on
+
+      - name: Affected tests
+        run: guardrails run affected
+
+      - name: Full tests
+        run: guardrails run full
+
+      - name: Typecheck
+        run: guardrails run typecheck
+
+      - name: Lint
+        run: guardrails run lint
+
+      # 启用契约快照后，取消下面两步的注释：
+      # - name: Contract snapshot
+      #   run: guardrails contract snapshot --path openapi/order.yaml --out .guardrails/contracts/order.json
+      # - name: Contract diff
+      #   run: guardrails contract diff --base .guardrails/contracts/order.json --current openapi/order.yaml
+
+      # 有 JUnit 报告时，导入本地指标：
+      # - name: Metrics
+      #   run: guardrails metrics ingest-junit --file reports/junit.xml --task ci
+
+      # 有 canary 基线时：
+      # - name: Canary
+      #   run: guardrails canary

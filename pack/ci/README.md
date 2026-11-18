@@ -1,73 +1,54 @@
 # CI 门禁
 
-只需要先上三条，够挡住大部分漂移：
+`gates.yml` 是可直接复制到 `.github/workflows/` 的工作流。它做这些事：
 
-| 检查 | 判定 | 作用 |
-|---|---|---|
-| 依赖方向 | 反向 import 即失败 | 防跨层 |
-| 循环依赖 | 检测到即失败 | 防纠缠 |
-| 未登记模块 | `registry.yaml` 里没有的模块目录即失败 | 防私建 |
+1. `guardrails lint-manual`：章节 frontmatter、描述、预算、重复、条件句。
+2. `guardrails sync --check`：生成的 AGENTS/Claude/Kiro/Cursor 视图是否过期。
+3. `guardrails affected --diff`：列出受影响测试。
+4. `guardrails quality --diff --fail-on`：复杂度、函数长度、重复块。
+5. `guardrails run affected|full|typecheck|lint`：跑 `guardrails.yaml` 里配置的真实命令。
+6. 可选：`guardrails contract diff` 阻断破坏性契约变更。
+7. 可选：`guardrails metrics ingest-junit` 导入测试结果；`guardrails canary` 对比基线。
 
-## 各技术栈的最小配置
+## 配置
 
-### TypeScript / JavaScript — dependency-cruiser
+把 `gates.yml` 复制到 `.github/workflows/gates.yml`，然后在 `guardrails.yaml` 填：
 
-```js
-// .dependency-cruiser.js
-module.exports = {
-  forbidden: [
-    { name: 'no-circular', severity: 'error', from: {}, to: { circular: true } },
-    { name: 'no-reverse', severity: 'error',
-      from: { path: '^modules/domain' },
-      to: { path: '^modules/(application|adapter)' } },
-    { name: 'no-internal', severity: 'error',
-      from: { path: '^modules/([^/]+)/' },
-      to: { path: '^modules/(?!$1)/', pathNot: 'CONTRACT' } },
-  ],
-};
+```yaml
+commands:
+  affected: "npm test -- --changed"
+  full: "npm test"
+  typecheck: "npm run typecheck"
+  lint: "npm run lint"
 ```
 
-### Python — import-linter
+`guardrails doctor` 会检查这四个命令是否还是 `TODO`。
 
-```toml
-# pyproject.toml
-[tool.importlinter]
-root_packages = ["app"]
+## 架构规则
 
-[[tool.importlinter.contracts]]
-name = "依赖方向"
-type = "layers"
-layers = ["app.adapter", "app.application", "app.domain"]
+`guardrails sync` 从 `guardrails.yaml` 生成：
+
+- TypeScript：`.guardrails/dependency-cruiser.js`
+- Python：`.guardrails/importlinter.toml`
+- 说明：`.guardrails/README.md`
+
+不要手写两份规则；改 `guardrails.yaml`，再跑 `guardrails sync`。
+
+启用实际检查：
+
+```bash
+# TypeScript
+npx depcruise --config .guardrails/dependency-cruiser.js .
+
+# Python：把 .guardrails/importlinter.toml 合并到 pyproject.toml
+lint-imports
 ```
 
-### Java / Kotlin — ArchUnit
+## 契约检查
 
-```java
-@AnalyzeClasses(packages = "com.example")
-class ArchitectureTest {
-  @ArchTest
-  static final ArchRule layers = layeredArchitecture()
-      .layer("Adapter").definedBy("..adapter..")
-      .layer("Application").definedBy("..application..")
-      .layer("Domain").definedBy("..domain..")
-      .whereLayer("Domain").mayNotAccessAnyLayer()
-      .whereLayer("Application").mayOnlyAccessLayers("Domain")
-      .whereLayer("Adapter").mayOnlyAccessLayers("Application", "Domain");
-}
+```bash
+guardrails contract snapshot --path openapi/order.yaml --out .guardrails/contracts/order.json
+guardrails contract diff --base .guardrails/contracts/order.json --current openapi/order.yaml
 ```
 
-## 未登记模块检查
-
-不依赖语言，直接跑：
-
-```powershell
-.\scripts\check-unregistered-modules.ps1
-```
-
-## 顺序
-
-1. 先上这三条，跑一周
-2. 稳定后加：受影响测试
-3. 再加：spec 漂移检查
-
-不要一次全上，否则会变成「天天在修流水线」。
+破坏性变更返回非 0，CI 直接阻断。

@@ -1,0 +1,9 @@
+id: feature-r2
+task:
+  type: feature
+  files:
+    - modules/order/src/cancel.ts
+    - modules/payment/src/refund.ts
+expect:
+  - change
+  - verify

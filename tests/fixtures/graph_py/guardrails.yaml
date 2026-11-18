@@ -1,0 +1,14 @@
+version: 1
+project:
+  name: graph_py
+layers: [domain]
+modules: []
+manual:
+  root: manual
+  card: manual/00-card.md
+  chapters: manual/chapters
+commands:
+  affected: "echo affected"
+  full: "echo full"
+  typecheck: "echo typecheck"
+  lint: "echo lint"

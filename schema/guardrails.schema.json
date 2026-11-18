@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/guardrails/guardrails.schema.json",
+  "title": "guardrails.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "project", "layers", "modules", "manual", "commands"],
+  "properties": {
+    "version": { "type": "integer", "minimum": 1 },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "languages": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "layers": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "path", "layer"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "path": { "type": "string", "minLength": 1 },
+          "layer": { "type": "string", "minLength": 1 },
+          "owner": { "type": "string" },
+          "contract": { "type": "string" },
+          "depends_on": {
+            "type": "array",
+            "items": { "type": "string" },
+            "uniqueItems": true
+          },
+          "public_api": {
+            "type": "array",
+            "items": { "type": "string" },
+            "uniqueItems": true
+          },
+          "forbidden": {
+            "type": "array",
+            "items": { "type": "string" },
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "contracts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "path", "kind"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9]+(\\.[a-z0-9-]+)+$" },
+          "path": { "type": "string", "minLength": 1 },
+          "kind": { "enum": ["openapi", "jsonschema", "protobuf", "other"] },
+          "consumers": {
+            "type": "array",
+            "items": { "type": "string" },
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "protected": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "holdout": { "type": "string" },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "R0": { "type": "array", "items": { "type": "string" } },
+        "R1": { "type": "array", "items": { "type": "string" } },
+        "R2": { "type": "array", "items": { "type": "string" } },
+        "R3": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "manual": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "card", "chapters"],
+      "properties": {
+        "root": { "type": "string", "minLength": 1 },
+        "card": { "type": "string", "minLength": 1 },
+        "chapters": { "type": "string", "minLength": 1 },
+        "max_chapters": { "type": "integer", "minimum": 1, "maximum": 20 },
+        "max_loaded_per_task": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "token_budget": { "type": "integer", "minimum": 200, "maximum": 20000 }
+      }
+    },
+    "adapters": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "agents": { "type": "string" },
+        "claude": { "type": "string" },
+        "kiro": { "type": "string" },
+        "cursor": { "type": "string" }
+      }
+    },
+    "commands": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["affected", "full", "typecheck", "lint"],
+      "properties": {
+        "affected": { "type": "string" },
+        "full": { "type": "string" },
+        "typecheck": { "type": "string" },
+        "lint": { "type": "string" },
+        "architecture": { "type": "string" },
+        "contract": { "type": "string" },
+        "mutation": { "type": "string" }
+      }
+    }
+  }
+}

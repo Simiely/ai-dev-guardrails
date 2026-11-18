@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="3" failures="1" errors="0" time="1.25">
+  <testsuite name="order" tests="2" failures="1" errors="0" time="0.8">
+    <testcase name="test_cancel" time="0.4" />
+    <testcase name="test_paid" time="0.4">
+      <failure message="expected reject" />
+    </testcase>
+  </testsuite>
+  <testsuite name="payment" tests="1" failures="0" errors="0" time="0.45">
+    <testcase name="test_charge" time="0.45" />
+  </testsuite>
+</testsuites>

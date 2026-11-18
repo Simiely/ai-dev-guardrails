@@ -24,4 +24,4 @@ Get-ChildItem -Path $target -Recurse -Filter *.md | ForEach-Object {
 Write-Host "已创建模块: modules/$Name"
 Write-Host "下一步："
 Write-Host "  1. 填写 modules/$Name/MODULE.md 和 FLOW.md"
-Write-Host "  2. 在 registry.yaml 登记（新增模块属于 T3，需要 ADR + 人批）"
+Write-Host "  2. 在 guardrails.yaml 登记（新增模块属于 R3，需要 ADR + 人批）"

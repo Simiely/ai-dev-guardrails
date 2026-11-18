@@ -6,6 +6,10 @@ on:
       - 'docs/**'
       - 'schema/**'
       - 'tools/**'
+      - 'pack/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
       - 'README.md'
       - 'AGENTS.md'
       - 'DEVELOPMENT.md'
@@ -26,10 +30,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Doc dependencies
-        # 文档仓（B 档）的 requirements.txt 就是文档依赖，直接 -r；
-        # 代码仓（A 档）才需要显式装，避免装到构建工具清单。
-        run: python -m pip install -r requirements.txt
+      - name: Dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install -e .
+          python -m pip install pytest
+      - name: Unit tests
+        run: python -m pytest -q
+      - name: Manual lint
+        run: guardrails --root pack lint-manual
+      - name: Generated views
+        run: guardrails --root pack sync --check
+      - name: Routing eval
+        run: guardrails --root pack eval-routing
       - name: Invariants (knowledge)
         # 没有 sources.json，不需要 --changed-since / 同 PR co-change。
         run: python tools/repo-kit/check_repo.py --root .

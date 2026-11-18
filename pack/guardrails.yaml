@@ -1,0 +1,77 @@
+# guardrails.yaml — 架构契约与手册配置的唯一机器源
+# 规则：modules/ 下每个目录都必须在这里登记；新增模块 = R3。
+version: 1
+
+project:
+  name: example
+  languages: [typescript, python]
+
+# 依赖只允许从左往右；禁止反向依赖与循环依赖。
+layers:
+  - domain
+  - application
+  - adapter
+
+modules: []
+# 示例：
+# modules:
+#   - name: order
+#     path: modules/order
+#     layer: application
+#     owner: "@owner"
+#     contract: modules/order/CONTRACT.md
+#     depends_on: [payment]
+#     public_api: [OrderService.cancel]
+
+contracts: []
+# 示例：
+# contracts:
+#   - id: http.order
+#     path: openapi/order.yaml
+#     kind: openapi
+#     consumers: [web, mobile]
+
+protected:
+  - ARCHITECTURE.md
+  - guardrails.yaml
+  - adr/**
+  - AGENTS.md
+  - manual/**
+  - .github/**
+
+# agent 不可见的验收测试；CI 单独跑
+holdout: acceptance/holdout
+
+risk:
+  R3:
+    - openapi/**
+    - migrations/**
+    - auth/**
+    - package.json
+    - pyproject.toml
+    - guardrails.yaml
+  R2:
+    - modules/**
+
+manual:
+  root: manual
+  card: manual/00-card.md
+  chapters: manual/chapters
+  max_chapters: 6
+  max_loaded_per_task: 3
+  token_budget: 4000
+
+adapters:
+  agents: AGENTS.md
+  claude: .claude/skills
+  kiro: .kiro/steering
+  cursor: .cursor/rules
+
+commands:
+  affected: "echo 'TODO: affected tests'"
+  full: "echo 'TODO: full tests'"
+  typecheck: "echo 'TODO: typecheck'"
+  lint: "echo 'TODO: lint'"
+  architecture: "guardrails sync --check"
+  contract: "guardrails contract diff"
+  # mutation: "npx stryker run --incremental"

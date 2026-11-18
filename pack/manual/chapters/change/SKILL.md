@@ -1,0 +1,62 @@
+---
+name: change
+description: >-
+  用于新 feature、跨模块改动或 3+ 文件改动，把意图变成可测试的规格和可执行计划。
+  不要在 typo、单文件可逆改动、已有失败测试的 bugfix 中使用。
+when_to_use:
+  - 新 feature
+  - 跨 2+ 模块
+  - 改动 3+ 文件
+  - 涉及契约或数据变更
+when_not_to_use:
+  - typo、文案
+  - 单文件可逆改动
+  - 已有失败测试的 bugfix
+globs:
+  - modules/**
+  - openapi/**
+  - migrations/**
+inputs:
+  - specs/<id>/task.yaml
+  - specs/<id>/context.md
+outputs:
+  - specs/<id>/intent.md
+  - specs/<id>/spec.md
+  - specs/<id>/plan.md
+  - specs/<id>/trace.yaml
+checks:
+  - guardrails trace check --task
+  - guardrails risk --files
+token_budget: 1400
+related:
+  - tdd
+  - verify
+  - review
+---
+# 规格与计划
+
+## 目标
+
+把 feature 或跨模块改动变成可测试的规格和可执行计划。
+
+## 步骤
+
+1. 写 `intent.md`：目标、非目标、约束、验收标准。
+2. 写 `spec.md`：行为、接口/契约、边界与失败路径、不做什么、验收映射。
+3. 过 8 项完整性清单：行为、边界、数据变更、接口/契约、非目标、约束、验收测试、回滚。少于 6 项不得进入实现。
+4. 写 `plan.md`：每步一个可验证结果、改动文件、影响模块、风险、回滚。
+5. 写 `trace.yaml`：每个验收标准 → 测试名。
+6. 计划超过 3 个模块或 5 个步骤时，拆任务。
+
+## 禁止
+
+- 不得在 spec 里写实现细节；实现细节属于 plan。
+- 不得扩大非目标；新增需求先改 intent。
+- 不得跳过验收映射。
+- 不得先写代码再补 spec。
+
+## 检查
+
+- `guardrails trace check --task specs/<id>` 通过。
+- `guardrails risk --files ...` 与 task.yaml 的风险一致。
+- 一个没看过对话的工程师能照着 plan 做完。
