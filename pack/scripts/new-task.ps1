@@ -3,6 +3,7 @@
     [string]$Id,
     [Parameter(Mandatory = $true)]
     [string]$Title,
+    [string]$Type = 'feature',
     [ValidateSet('R0', 'R1', 'R2', 'R3')]
     [string]$Tier = 'R1'
 )
@@ -25,6 +26,12 @@ New-Item -ItemType Directory -Path $target -Force | Out-Null
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 $date = Get-Date -Format 'yyyy-MM-dd'
 
+$taskTemplate = Join-Path $root 'templates/task.yaml'
+if (-not (Test-Path $taskTemplate)) { Write-Error "找不到模板: $taskTemplate" }
+$taskContent = [System.IO.File]::ReadAllText($taskTemplate)
+$taskContent = $taskContent.Replace('{{ID}}', $Id).Replace('{{TITLE}}', $Title).Replace('{{TYPE}}', $Type).Replace('{{TIER}}', $Tier)
+[System.IO.File]::WriteAllText((Join-Path $target 'task.yaml'), $taskContent, $utf8)
+
 foreach ($f in $files) {
     $src = Join-Path $root "templates/$f.md"
     if (-not (Test-Path $src)) { Write-Error "找不到模板: $src" }
@@ -35,4 +42,4 @@ foreach ($f in $files) {
 
 Write-Host "已创建任务: specs/$Id ($Tier)"
 Get-ChildItem $target | ForEach-Object { Write-Host "  - $($_.Name)" }
-Write-Host "下一步：运行 guardrails brief --task specs/$Id，只加载它选中的章节。"
+Write-Host "下一步：运行 guardrails brief --task specs/$Id/task.yaml，只加载它选中的章节。"

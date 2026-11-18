@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -29,6 +30,8 @@ from .risk import classify
 from .route import Task, brief_text, load_task, select_chapters
 from .state import active_task, handoff_text, init_state, load_state, set_active, update_state
 from .sync import sync_views
+from .task import create_task
+from .trace import add_raw_source, raw_sources, verify_trace
 from .util import GuardrailsError
 
 
@@ -44,6 +47,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_init = sub.add_parser("init", help="copy the pack into a project")
     p_init.add_argument("--target", default=".")
     p_init.add_argument("--source", default=None)
+    p_init.add_argument("--mode", choices=["greenfield", "brownfield"], default="greenfield")
+    p_init.add_argument("--dry-run", action="store_true")
     p_init.add_argument("--force", action="store_true")
 
     p_lint = sub.add_parser("lint-manual", help="lint the always-on card and chapters")
@@ -56,12 +61,39 @@ def build_parser() -> argparse.ArgumentParser:
     p_brief.add_argument("--unfamiliar", action="store_true")
     p_brief.add_argument("--json", action="store_true")
 
+    p_task = sub.add_parser("task", help="create a task scaffold")
+    tsub = p_task.add_subparsers(dest="task_command", required=True)
+    p_task_new = tsub.add_parser("new")
+    p_task_new.add_argument("--id", required=True)
+    p_task_new.add_argument("--title", required=True)
+    p_task_new.add_argument("--type", default="feature")
+    p_task_new.add_argument("--risk", default="R1", choices=["R0", "R1", "R2", "R3"])
+    p_task_new.add_argument("--files", nargs="*", default=[])
+
+    p_trace = sub.add_parser("verify-trace", help="verify claim sources and hashes")
+    p_trace.add_argument("--task", default=None)
+    p_trace.add_argument("--all", action="store_true")
+    p_trace.add_argument("--require", action="store_true", help="fail on claims without a source")
+    p_trace.add_argument("--json", action="store_true")
+
+    p_raw = sub.add_parser("raw", help="manage immutable raw sources")
+    rsub = p_raw.add_subparsers(dest="raw_command", required=True)
+    p_raw_add = rsub.add_parser("add")
+    p_raw_add.add_argument("--task", required=True)
+    p_raw_add.add_argument("--from", dest="source", required=True)
+    p_raw_add.add_argument("--origin", default="")
+    p_raw_add.add_argument("--force", action="store_true")
+    p_raw_list = rsub.add_parser("list")
+    p_raw_list.add_argument("--task", required=True)
+    p_raw_list.add_argument("--json", action="store_true")
+
     p_eval = sub.add_parser("eval-routing", help="measure routing recall/zero-load/over-load")
     p_eval.add_argument("--suite", default=None)
     p_eval.add_argument("--json", action="store_true")
 
     p_sync = sub.add_parser("sync", help="generate AGENTS/Claude/Kiro/Cursor views")
     p_sync.add_argument("--check", action="store_true")
+    p_sync.add_argument("--force", action="store_true", help="overwrite files without the generated marker")
     p_sync.add_argument("--json", action="store_true")
 
     p_contract = sub.add_parser("contract", help="snapshot and diff contracts")
@@ -249,6 +281,10 @@ def cmd_brief(root: Path, args: argparse.Namespace) -> int:
     if args.unfamiliar:
         task.unfamiliar = True
     result = select_chapters(task, config, chapters)
+    if args.task:
+        sources = raw_sources(root, task.id)
+        if sources:
+            result["raw_sources"] = sources
     if args.json:
         _print_json(result)
     else:
@@ -284,19 +320,28 @@ def cmd_eval(root: Path, args: argparse.Namespace) -> int:
 
 def cmd_sync(root: Path, args: argparse.Namespace) -> int:
     config = load_config(root)
-    result = sync_views(root, config, check=args.check)
+    result = sync_views(root, config, check=args.check, force=args.force)
     if args.json:
         _print_json(result)
     else:
+        for item in result["conflicts"]:
+            print(f"CONFLICT {item['path']} (unmanaged file; merge manually or use --force)")
         if result["drift"]:
             for item in result["drift"]:
                 print(f"{item['status'].upper()} {item['path']}")
         if result["written"]:
             for path in result["written"]:
                 print(f"WROTE {path}")
-        status = "PASS" if not result["drift"] else "FAIL"
-        print(f"SYNC: {status} (written={len(result['written'])}, drift={len(result['drift'])})")
-    return 0 if not (args.check and result["drift"]) else 1
+        failed = bool(result["conflicts"]) or (args.check and bool(result["drift"]))
+        status = "PASS" if not failed else "FAIL"
+        print(
+            f"SYNC: {status} "
+            f"(written={len(result['written'])}, drift={len(result['drift'])}, "
+            f"conflicts={len(result['conflicts'])})"
+        )
+    if args.check:
+        return 1 if result["drift"] or result["conflicts"] else 0
+    return 1 if result["conflicts"] else 0
 
 
 def cmd_contract(root: Path, args: argparse.Namespace) -> int:
@@ -566,9 +611,79 @@ def cmd_doctor(root: Path, args: argparse.Namespace) -> int:
 def cmd_init(args: argparse.Namespace) -> int:
     target = Path(args.target).resolve()
     source = Path(args.source).resolve() if args.source else None
-    init_project(target, source=source, force=args.force)
-    print(next_steps(target))
+    result = init_project(
+        target,
+        source=source,
+        force=args.force,
+        mode=args.mode,
+        dry_run=args.dry_run,
+    )
+    print(next_steps(result))
     return 0
+
+
+def cmd_task(root: Path, args: argparse.Namespace) -> int:
+    if args.task_command == "new":
+        result = create_task(
+            root,
+            task_id=args.id,
+            title=args.title,
+            task_type=args.type,
+            risk=args.risk,
+            files=args.files or None,
+        )
+        print(f"TASK: {result['task']} -> {result['path']}")
+        for name in result["created"]:
+            print(f"- {name}")
+        print(f"next: guardrails brief --task specs/{result['task']}/task.yaml")
+        return 0
+    raise GuardrailsError("unknown task subcommand")
+
+
+def cmd_verify_trace(root: Path, args: argparse.Namespace) -> int:
+    if args.all and args.task:
+        raise GuardrailsError("use either --task or --all, not both")
+    result = verify_trace(
+        root,
+        task=args.task,
+        all_tasks=args.all,
+        require_sources=args.require,
+    )
+    if args.json:
+        _print_json(result)
+    else:
+        for warning in result["warnings"]:
+            print(f"WARN  {warning}")
+        for error in result["errors"]:
+            print(f"ERROR {error}")
+        print(
+            f"TRACE: {'PASS' if result['ok'] else 'FAIL'} "
+            f"(tasks={result['checked']}, errors={len(result['errors'])}, "
+            f"warnings={len(result['warnings'])})"
+        )
+    return 0 if result["ok"] else 1
+
+
+def cmd_raw(root: Path, args: argparse.Namespace) -> int:
+    if args.raw_command == "add":
+        entry = add_raw_source(
+            root,
+            args.task,
+            _input_path(root, args.source),
+            origin=args.origin,
+            force=args.force,
+        )
+        print(f"RAW: {entry['path']} {entry['sha256']}")
+        return 0
+    if args.raw_command == "list":
+        sources = raw_sources(root, args.task)
+        if args.json:
+            _print_json(sources)
+        else:
+            for item in sources:
+                print(f"{item.get('path')}  {item.get('origin', '')}  {item.get('sha256', '')}")
+        return 0
+    raise GuardrailsError("unknown raw subcommand")
 
 
 def cmd_hook(root: Path, args: argparse.Namespace) -> int:
@@ -602,7 +717,7 @@ def cmd_run(root: Path, args: argparse.Namespace) -> int:
     command = config.get("commands", {}).get(args.name)
     if not command:
         raise GuardrailsError(f"unknown command {args.name!r} in guardrails.yaml")
-    if "TODO" in command or "<command>" in command:
+    if "TODO" in command or re.search(r"<[^>]+>", command):
         raise GuardrailsError(f"command {args.name!r} is not configured: {command}")
     proc = subprocess.run(command, shell=True, cwd=root)
     return proc.returncode
@@ -619,6 +734,12 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_lint(root, args)
         if args.command == "brief":
             return cmd_brief(root, args)
+        if args.command == "task":
+            return cmd_task(root, args)
+        if args.command == "verify-trace":
+            return cmd_verify_trace(root, args)
+        if args.command == "raw":
+            return cmd_raw(root, args)
         if args.command == "eval-routing":
             return cmd_eval(root, args)
         if args.command == "sync":

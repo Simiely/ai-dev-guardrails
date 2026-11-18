@@ -16,7 +16,8 @@
 | 越改越漂 | `guardrails.yaml` 生成依赖规则；契约快照 diff 阻断破坏性变更 |
 | 主逻辑不清晰 | 6 个章节按工作阶段拆分，每任务只加载 2–3 个 |
 | 没有模块化 | 模块登记 + 只允许 import `CONTRACT` |
-| 上下文太长被压缩 | 常驻卡 ≤80 行；压缩后只恢复卡 + 当前章节 + `state.json` |
+| 上下文太长被压缩 | 常驻卡 ≤80 行；压缩后只恢复卡 + 当前章节 + `state.json` + `raw/` 原文清单 |
+| AI 理不清、摘要失真 | `specs/<id>/raw/` 只读原文 + `trace.yaml` 引用 + `guardrails verify-trace` |
 | AI 不加载该看的规则 | 显式 `guardrails brief` 预选，不依赖隐式路由 |
 | 规则越写越厚 | 章节上限 6 个；`lint-manual` 抓臃肿、弱路由、重复、条件句 |
 | 死代码多 | 三证删除规则：静态无引用 + 运行时无注册 + 测试不依赖 |
@@ -28,14 +29,29 @@
 - 不是通用代码图：检索交给 Serena / CodeGraph 等 MCP。
 - 不强制所有任务写全套 SDD：只对 feature、data pipeline、3+ 文件、高代价改动。
 
+## 单份可写
+
+它只保留**一个可写源**，不维护两份会漂移的副本：
+
+```text
+原文层   specs/<id>/raw/ + git commit  只读、不可变
+派生层   intent/spec/plan/state/trace  AI 可写，但必须引用原文
+生成层   AGENTS.md / adapters / 规则    由 sync 单向生成，不手改
+```
+
+原文与摘要冲突时以原文为准；找不到原文的写「假设」。这样压缩后即使理不清，也能按 `raw/manifest.json` 和 `trace.yaml` 回到原始数据。
+
 ## 快速开始
 
 ```bash
 # 1. 安装 CLI（本地开发用 -e）
 python -m pip install -e /path/to/ai-dev-guardrails
 
-# 2. 复制模板包到项目
-guardrails init --target .
+# 2. 新项目：空目录或只有 .git/README
+guardrails init --target . --mode greenfield
+
+# 老项目：只复制契约层和手册，不碰现有代码
+guardrails init --target . --mode brownfield
 
 # 3. 填 guardrails.yaml：modules / contracts / risk / commands
 # 4. 改 manual/00-card.md 和 manual/chapters/*/SKILL.md
@@ -57,12 +73,16 @@ guardrails doctor
 
 | 命令 | 作用 |
 |---|---|
-| `guardrails init` | 复制 `pack/` 到项目 |
+| `guardrails init --mode greenfield|brownfield` | 复制 `pack/`；brownfield 只复制契约层和手册 |
+| `guardrails task new --id <id> --title ...` | 生成 `task.yaml`、intent/spec/plan |
 | `guardrails lint-manual` | 校验常驻卡和 6 个章节 |
-| `guardrails brief --task specs/<id>` | 选 1–3 个章节，输出 manifest 和 token 预算 |
+| `guardrails brief --task specs/<id>` | 选 1–3 个章节，输出 manifest、token 预算和 raw sources |
+| `guardrails raw add --task <id> --from <path>` | 把原文复制到 `raw/` 并写入 sha256 manifest |
+| `guardrails verify-trace --task <id>` / `--all` | 校验 trace.yaml 的原文引用、sha256 和 commit |
 | `guardrails eval-routing` | 测 routing recall / zero-load / over-load |
 | `guardrails sync` | 生成 AGENTS / Claude / Kiro / Cursor 视图 + `.guardrails/` 架构规则 |
 | `guardrails sync --check` | CI 检查生成视图/规则是否过期 |
+| `guardrails sync --force` | 覆盖没有 generated 标记的同名文件 |
 | `guardrails affected --diff` | 源码↔测试图，列出受影响测试 |
 | `guardrails test-lock --task <id>` | red 后锁定测试文件 |
 | `guardrails test-check --task <id>` | 检查测试是否被改动 |
@@ -101,6 +121,22 @@ manual/
 - 每个章节有 token 预算；超预算就拆到 `references/` 或删。
 - 常驻卡不放流程，只放红线、路由和命令。
 
+## 任务模型
+
+```text
+specs/<id>/
+├── raw/              # 原文层：只读，manifest.json 记录 sha256
+├── task.yaml         # id / type / goal / files / risk
+├── intent.md         # 派生层：AI 可写
+├── spec.md           # 派生层：AI 可写
+├── plan.md           # 派生层：AI 可写
+├── trace.yaml        # acceptance → 测试；claims → 原文
+├── state.json        # 当前步骤 / 已读章节 / 下一步
+└── evidence.json     # 门禁结果
+```
+
+`guardrails state handoff` 会恢复卡 + 当前章节 + state + raw manifest + trace；压缩后按原文回读，不依赖 AI 自己的摘要。
+
 ## 仓库结构
 
 ```text
@@ -112,10 +148,12 @@ ai-dev-guardrails/
 ├── pack/                可复制模板包
 │   ├── manual/          常驻卡 + 6 个章节（唯一源）
 │   ├── guardrails.yaml  架构契约配置
+│   ├── templates/       task / intent / spec / plan / trace 模板
+│   ├── specs/           任务目录约定（raw / trace / state）
 │   ├── eval/routing/    routing 基准
 │   └── ci/gates.yml     真实 CI 门禁
 ├── schema/              内容契约与配置 schema
-├── tools/guardrails/    CLI：lint / brief / sync / contract / risk / doctor
+├── tools/guardrails/    CLI：lint / brief / sync / contract / risk / doctor / trace
 └── tools/repo-kit/      文档检查与生成
 ```
 

@@ -15,6 +15,9 @@ def classify(files: list[str], config: dict[str, Any]) -> dict[str, Any]:
     risk_cfg = config.get("risk", {})
     modules_cfg = config.get("modules", [])
     contract_paths = [normalize_path(str(item.get("path", ""))) for item in config.get("contracts", [])]
+    unknown_default = str(risk_cfg.get("unknown_default", "R1")).upper()
+    if unknown_default not in {"R0", "R1", "R2", "R3"}:
+        unknown_default = "R1"
 
     modules = sorted(
         {
@@ -47,7 +50,7 @@ def classify(files: list[str], config: dict[str, Any]) -> dict[str, Any]:
         level = "R1"
         reasons.append(f"single module: {modules[0]}")
     else:
-        level = "R1"
-        reasons.append("no registered module matched; default R1")
+        level = unknown_default
+        reasons.append(f"no registered module matched; default {unknown_default}")
 
     return {"level": level, "reasons": reasons, "modules": modules}

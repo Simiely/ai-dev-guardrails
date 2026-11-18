@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .config import load_config
+from .config import load_config, repo_schema
 from .lint import lint_manual
 from .manual import load_card, load_chapters
 from .sync import sync_views
@@ -22,6 +22,14 @@ def run_doctor(root: Path) -> dict[str, Any]:
     except GuardrailsError as exc:
         _check(checks, "FAIL", "config", str(exc))
         return {"passed": False, "checks": checks}
+
+    schema = repo_schema("guardrails.schema.json")
+    _check(
+        checks,
+        "PASS" if schema is not None and schema.exists() else "FAIL",
+        "schema",
+        "guardrails.schema.json available" if schema is not None else "missing packaged schema",
+    )
 
     try:
         card = load_card(root, config)
@@ -48,7 +56,14 @@ def run_doctor(root: Path) -> dict[str, Any]:
         _check(checks, "PASS", "manual.lint", "no errors")
 
     sync = sync_views(root, config, check=True)
-    if sync["drift"]:
+    if sync["conflicts"]:
+        _check(
+            checks,
+            "FAIL",
+            "views.sync",
+            f"{len(sync['conflicts'])} unmanaged files block generation; merge or run sync --force",
+        )
+    elif sync["drift"]:
         _check(checks, "FAIL", "views.sync", f"{len(sync['drift'])} stale generated files")
     else:
         _check(checks, "PASS", "views.sync", "generated views are up to date")

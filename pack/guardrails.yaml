@@ -37,12 +37,15 @@ protected:
   - adr/**
   - AGENTS.md
   - manual/**
+  - specs/**/raw/**
   - .github/**
 
 # agent 不可见的验收测试；CI 单独跑
 holdout: acceptance/holdout
 
 risk:
+  # 老项目接入时建议改成 R2；未登记文件不会被误判为低风险。
+  unknown_default: R1
   R3:
     - openapi/**
     - migrations/**
@@ -73,5 +76,6 @@ commands:
   typecheck: "echo 'TODO: typecheck'"
   lint: "echo 'TODO: lint'"
   architecture: "guardrails sync --check"
-  contract: "guardrails contract diff"
+  # contract 需要真实快照路径；有契约时再取消注释并改成你的路径：
+  # contract: "guardrails contract diff --base .guardrails/contracts/openapi.json --current openapi.yaml"
   # mutation: "npx stryker run --incremental"

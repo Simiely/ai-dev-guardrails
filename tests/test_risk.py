@@ -31,3 +31,15 @@ def test_openapi_is_r3():
     result = classify(["openapi/order.yaml"], CONFIG)
     assert result["level"] == "R3"
     assert any("R3 path" in reason for reason in result["reasons"])
+
+
+def test_unknown_default_is_configurable():
+    config = {**CONFIG, "risk": {**CONFIG["risk"], "unknown_default": "R2"}}
+    result = classify(["src/unknown.py"], config)
+    assert result["level"] == "R2"
+    assert any("default R2" in reason for reason in result["reasons"])
+
+
+def test_unknown_default_invalid_falls_back_to_r1():
+    config = {**CONFIG, "risk": {**CONFIG["risk"], "unknown_default": "R9"}}
+    assert classify(["src/unknown.py"], config)["level"] == "R1"

@@ -118,6 +118,28 @@ def handoff_text(root: Path, task: str | None = None) -> str:
     except GuardrailsError:
         lines += ["## Card", "", "_manual/card not available_", ""]
 
+    raw_manifest = root / "specs" / task / "raw" / "manifest.json"
+    if raw_manifest.exists():
+        lines += [
+            "## Raw Sources",
+            "",
+            "> 原文只读；摘要与原文冲突时以原文为准。",
+            "",
+            "```json",
+            read_text(raw_manifest).rstrip(),
+            "```",
+            "",
+        ]
+    trace_path = root / "specs" / task / "trace.yaml"
+    if trace_path.exists():
+        lines += [
+            "## Trace",
+            "",
+            f"- `{trace_path}`",
+            f"- run: `guardrails verify-trace --task {task}`",
+            "",
+        ]
+
     next_step = str(state.get("next") or "")
     if next_step:
         lines += ["## Next", "", next_step, ""]

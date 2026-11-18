@@ -1,0 +1,6 @@
+id: {{ID}}
+type: {{TYPE}}
+goal: {{TITLE}}
+files: []
+risk: {{TIER}}
+unfamiliar: false

@@ -1,4 +1,5 @@
 import json
+import shutil
 from pathlib import Path
 
 from guardrails.cli import main
@@ -62,3 +63,29 @@ def test_cli_report(capsys):
     assert main(["--root", str(root), "report", "--json"]) == 0
     data = json.loads(capsys.readouterr().out)
     assert data["tests"] == 2
+
+
+def test_cli_task_new(tmp_path, capsys):
+    shutil.copytree(PACK / "templates", tmp_path / "templates")
+    assert main(["--root", str(tmp_path), "task", "new", "--id", "t1", "--title", "T", "--risk", "R1"]) == 0
+    assert (tmp_path / "specs" / "t1" / "task.yaml").exists()
+    assert "TASK: t1" in capsys.readouterr().out
+
+
+def test_cli_verify_trace_all_empty(tmp_path, capsys):
+    assert main(["--root", str(tmp_path), "verify-trace", "--all"]) == 0
+    assert "TRACE: PASS" in capsys.readouterr().out
+
+
+def test_cli_raw_add_and_list(tmp_path, capsys):
+    source = tmp_path / "issue.md"
+    source.write_text("原始需求\n", encoding="utf-8")
+    assert main([
+        "--root", str(tmp_path), "raw", "add",
+        "--task", "t1", "--from", str(source), "--origin", "issue #1",
+    ]) == 0
+    assert (tmp_path / "specs" / "t1" / "raw" / "issue.md").exists()
+    capsys.readouterr()
+    assert main(["--root", str(tmp_path), "raw", "list", "--task", "t1", "--json"]) == 0
+    data = json.loads(capsys.readouterr().out)
+    assert data[0]["origin"] == "issue #1"

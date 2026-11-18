@@ -13,18 +13,20 @@ alwaysApply: false
 
 ## 步骤
 
-1. 从 `guardrails brief` 拿章节清单和 token 预算。
-2. 读当前模块 `MODULE.md`、`FLOW.md`；只读直接依赖的 `CONTRACT`，不读实现。
-3. 读相关 ADR 和契约快照。
-4. 用 `guardrails affected --files ...` 列受影响测试。
-5. 写 `context.md`：读取清单、未读清单、假设、待确认、manifest hash。
-6. 超过预算时，先删兄弟模块和传递依赖，不删当前模块源码。
+1. 从 `guardrails brief` 拿章节清单、token 预算和 raw sources。
+2. 先读 `specs/<id>/raw/manifest.json`，需要时回读原文；原文优先于任何摘要。
+3. 读当前模块 `MODULE.md`、`FLOW.md`；只读直接依赖的 `CONTRACT`，不读实现。
+4. 读相关 ADR 和契约快照。
+5. 用 `guardrails affected --files ...` 列受影响测试。
+6. 写 `context.md`：读取清单、未读清单、假设、待确认、manifest hash。
+7. 超过预算时，先删兄弟模块和传递依赖，不删当前模块源码。
 
 ## 禁止
 
 - 不得全库 grep 当上下文。
 - 不得读兄弟模块实现或传递依赖。
 - 不得凭记忆补文件内容。
+- 不得修改 `specs/<id>/raw/`，也不得用摘要替代原文。
 - 不得在没有 manifest 的情况下开始改代码。
 
 ## 检查

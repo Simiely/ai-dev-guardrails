@@ -40,7 +40,11 @@ def lint_manual(root: Path, config: dict[str, Any], card: Card, chapters: list[C
             _add(errors, "card.missing_section", card.path, f"missing section {section!r}")
 
     schema_path = repo_schema("skill.schema.json")
-    skill_schema = json.loads(read_text(schema_path)) if schema_path.exists() else None
+    skill_schema = (
+        json.loads(read_text(schema_path))
+        if schema_path is not None and schema_path.exists()
+        else None
+    )
     max_chapters = int(config.get("manual", {}).get("max_chapters", 6))
 
     if len(chapters) > max_chapters:

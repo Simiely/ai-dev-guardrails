@@ -19,11 +19,12 @@ description: 用于每次提交或合并前跑机器门禁，收集可复核的�
 3. 类型检查：`guardrails run typecheck`。
 4. lint：`guardrails run lint`。
 5. 架构规则：`guardrails sync --check`。
-6. 契约检查：`guardrails contract diff`。
-7. 风险分级：`guardrails risk --diff`。
-8. 质量：`guardrails quality --diff --fail-on`。
-9. 测试托管：`guardrails test-check --task <id>`。
-10. mutation：`guardrails mutation --diff`。
+6. 契约检查：`guardrails contract diff --base <snapshot> --current <path>`（有契约时）。
+7. 原文引用：`guardrails verify-trace --task <id>`。
+8. 风险分级：`guardrails risk --diff`。
+9. 质量：`guardrails quality --diff --fail-on`。
+10. 测试托管：`guardrails test-check --task <id>`。
+11. mutation：`guardrails mutation --diff`。
 
 前一条不过，不跑后一条。失败时保留命令、堆栈、diff、期望值；写进 `evidence.json`。
 
@@ -38,4 +39,5 @@ description: 用于每次提交或合并前跑机器门禁，收集可复核的�
 
 - 每条门禁都有命令和结果。
 - 破坏性契约变更已阻断。
+- `trace.yaml` 的 claim 能回到原文；raw hash 或 commit 没变。
 - 证据 hash 与本次 diff 一致。

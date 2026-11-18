@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## v0.6.0 — 2026-11-18
+
+### 单份可写
+
+- `guardrails init --mode greenfield|brownfield`：brownfield 只复制契约层和手册，不碰现有代码。
+- `guardrails init --dry-run`：只报告会复制/冲突的文件。
+- `init` 忽略 `.git`、`.gitignore`、`README.md`；默认不覆盖，冲突列清单。
+- `guardrails sync` 只覆盖带 generated 标记的文件；未托管同名文件报冲突，需 `--force`。
+- `pack/`、`schema/` 作为包内 `_assets` 打包，wheel 安装后 `init`/schema 校验可用。
+
+### 原文与派生
+
+- `specs/<id>/raw/` 只读原文；`raw/manifest.json` 记录来源、时间、sha256。
+- 新增 `guardrails raw add/list`：复制原文到 `raw/` 并写入 manifest。
+- `trace.yaml` 支持 `acceptance`（验收标准 → 测试）和 `claims`（结论 → 原文/file:line）。
+- 新增 `guardrails verify-trace --task <id>` / `--all`，检查 sha256、commit 和行号。
+- `state handoff` 带上 raw manifest 和 trace；`brief` 输出 raw sources。
+- 卡片新增红线：摘要不是证据，原文优先。
+
+### 任务与风险
+
+- 新增 `guardrails task new --id ... --title ...`，生成 `task.yaml` + intent/spec/plan。
+- 新增 `pack/templates/task.yaml`、`pack/templates/trace.yaml`。
+- `new-task.ps1` 现在会生成 `task.yaml`。
+- `risk.unknown_default` 可配；brownfield 建议设为 R2。
+- `commands.contract` 改为带参数的注释示例，避免 `guardrails run contract` 直接报错。
+
+### 测试
+
+- 新增 init（greenfield/brownfield/dry-run/冲突）、sync 冲突、trace、task new、risk 默认值测试。
+
 ## v0.5.0 — 2026-11-18
 
 ### 运行证据

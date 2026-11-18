@@ -18,7 +18,7 @@ description: 用于新 feature、跨模块改动或 3+ 文件改动，把意图�
 2. 写 `spec.md`：行为、接口/契约、边界与失败路径、不做什么、验收映射。
 3. 过 8 项完整性清单：行为、边界、数据变更、接口/契约、非目标、约束、验收测试、回滚。少于 6 项不得进入实现。
 4. 写 `plan.md`：每步一个可验证结果、改动文件、影响模块、风险、回滚。
-5. 写 `trace.yaml`：每个验收标准 → 测试名。
+5. 写 `trace.yaml`：`acceptance` 写验收标准 → 测试名；`claims` 写关键结论 → `raw/` 或 `file:line`。
 6. 计划超过 3 个模块或 5 个步骤时，拆任务。
 
 ## 禁止
@@ -30,6 +30,6 @@ description: 用于新 feature、跨模块改动或 3+ 文件改动，把意图�
 
 ## 检查
 
-- `guardrails trace check --task specs/<id>` 通过。
+- `guardrails verify-trace --task specs/<id>` 通过。
 - `guardrails risk --files ...` 与 task.yaml 的风险一致。
 - 一个没看过对话的工程师能照着 plan 做完。

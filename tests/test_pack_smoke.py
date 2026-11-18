@@ -7,7 +7,7 @@ from guardrails.doctor import run_doctor
 from guardrails.init import init_project
 from guardrails.manual import load_chapters, load_manual
 from guardrails.lint import lint_manual
-from guardrails.sync import sync_views
+from guardrails.sync import GENERATED, sync_views
 
 PACK = Path(__file__).resolve().parents[1] / "pack"
 
@@ -44,7 +44,7 @@ def test_ready_project_passes_lint_sync_and_doctor(tmp_path):
     card, chapters = load_manual(project, config)
     assert lint_manual(project, config, card, chapters)["errors"] == []
     assert len(chapters) == 6
-    (project / "AGENTS.md").write_text("# stale\n", encoding="utf-8")
+    (project / "AGENTS.md").write_text(GENERATED + "\n\n# stale\n", encoding="utf-8")
     assert sync_views(project, config, check=False)["written"]
     assert sync_views(project, config, check=True)["drift"] == []
     result = run_doctor(project)

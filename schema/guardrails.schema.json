@@ -84,6 +84,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "unknown_default": { "enum": ["R0", "R1", "R2", "R3"] },
         "R0": { "type": "array", "items": { "type": "string" } },
         "R1": { "type": "array", "items": { "type": "string" } },
         "R2": { "type": "array", "items": { "type": "string" } },

@@ -21,6 +21,12 @@ description: 用于实现或修 bug，先证明失败，再让测试变绿，最
 6. 跑受影响测试和全量测试；把结果写进 `evidence.json`。
 7. 需要改测试时先 `guardrails test-approve --task <id> --reason ...`，改完重新 red 并 `test-lock`。
 
+## 老项目（brownfield）
+
+- 没有测试时，先写 characterization test：固定当前行为，第一次可以是绿的。
+- 记录基线（commit / tag），再在 `test-lock` 保护下重构。
+- characterization test 不写期望的新行为；新行为另开测试。
+
 ## 禁止
 
 - 不得删除、跳过或放宽测试来求绿。

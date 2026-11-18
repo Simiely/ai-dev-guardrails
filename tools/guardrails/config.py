@@ -7,12 +7,16 @@ from typing import Any
 import yaml
 from jsonschema import Draft202012Validator
 
+from .assets import asset_path
 from .util import GuardrailsError, read_text
 
 
-def repo_schema(name: str) -> Path:
-    # tools/guardrails/config.py -> repo root
-    return Path(__file__).resolve().parents[2] / "schema" / name
+def repo_schema(name: str) -> Path | None:
+    """Resolve a schema in source or installed layouts."""
+    try:
+        return asset_path("schema", name)
+    except GuardrailsError:
+        return None
 
 
 def load_config(root: Path) -> dict[str, Any]:
@@ -23,7 +27,7 @@ def load_config(root: Path) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise GuardrailsError(f"{path}: expected a mapping")
     schema_path = repo_schema("guardrails.schema.json")
-    if schema_path.exists():
+    if schema_path is not None and schema_path.exists():
         schema = json.loads(read_text(schema_path))
         errors = sorted(
             Draft202012Validator(schema).iter_errors(raw),

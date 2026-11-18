@@ -12,7 +12,7 @@
 
 ### how-to
 
-- [使用指南：装 CLI、填契约、跑第一个任务](./docs/使用指南.md) — 从安装 guardrails、填 guardrails.yaml、裁剪章节到第一个任务的完整走查。
+- [使用指南：装 CLI、填契约、跑第一个任务](./docs/使用指南.md) — 从安装 guardrails、新项目/老项目接入、填契约、原文与 trace，到第一个任务的完整走查。
 
 ### reference
 

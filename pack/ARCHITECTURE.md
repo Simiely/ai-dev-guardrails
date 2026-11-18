@@ -65,7 +65,7 @@ domain  ←  application  ←  adapter
 | 类型检查 | `<command>` |
 | lint | `<command>` |
 | 架构规则 | `guardrails sync --check` |
-| 契约检查 | `guardrails contract diff` |
+| 契约检查 | `guardrails contract diff --base <snapshot> --current <path>` |
 
 ## 8. 变更记录
 

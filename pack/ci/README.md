@@ -4,11 +4,12 @@
 
 1. `guardrails lint-manual`：章节 frontmatter、描述、预算、重复、条件句。
 2. `guardrails sync --check`：生成的 AGENTS/Claude/Kiro/Cursor 视图是否过期。
-3. `guardrails affected --diff`：列出受影响测试。
-4. `guardrails quality --diff --fail-on`：复杂度、函数长度、重复块。
-5. `guardrails run affected|full|typecheck|lint`：跑 `guardrails.yaml` 里配置的真实命令。
-6. 可选：`guardrails contract diff` 阻断破坏性契约变更。
-7. 可选：`guardrails metrics ingest-junit` 导入测试结果；`guardrails canary` 对比基线。
+3. `guardrails verify-trace --all`：检查 `trace.yaml` 的原文引用、sha256 和 commit。
+4. `guardrails affected --diff`：列出受影响测试。
+5. `guardrails quality --diff --fail-on`：复杂度、函数长度、重复块。
+6. `guardrails run affected|full|typecheck|lint`：跑 `guardrails.yaml` 里配置的真实命令。
+7. 可选：`guardrails contract diff` 阻断破坏性契约变更。
+8. 可选：`guardrails metrics ingest-junit` 导入测试结果；`guardrails canary` 对比基线。
 
 ## 配置
 

@@ -24,6 +24,8 @@ jobs:
 
       - name: Generated views and architecture rules are up to date
         run: guardrails sync --check
+      - name: Trace sources
+        run: guardrails verify-trace --all
 
       # 启用实际架构检查（二选一）：
       # - name: Architecture rules (TypeScript)

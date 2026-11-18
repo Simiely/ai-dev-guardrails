@@ -1,0 +1,18 @@
+# 验收标准 → 测试名；关键结论 → 原文。
+# 取消注释后填写；空的 trace 也能通过 verify-trace，但会提示没有条目。
+#
+# acceptance:
+#   - criterion: "<验收标准>"
+#     test: "tests/test_x.py::test_y"
+#
+# claims:
+#   - id: C1
+#     claim: "<结论>"
+#     source: "raw/request.md"
+#     lines: "1-10"
+#     sha256: "<sha256>"
+#   - id: C2
+#     claim: "<结论>"
+#     source: "app/order/service.py"
+#     lines: "40-66"
+#     commit: "<git commit>"

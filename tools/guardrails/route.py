@@ -166,4 +166,13 @@ def brief_text(result: dict[str, Any], chapters: list[Chapter]) -> str:
     for name in result["selected"]:
         chapter = by_name[name]
         lines.append(f"- {name}: {chapter.description}")
+    raw = result.get("raw_sources") or []
+    if raw:
+        lines.append("raw sources:")
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+            origin = str(item.get("origin") or "")
+            path = str(item.get("path") or "?")
+            lines.append(f"- {path}" + (f" ({origin})" if origin else ""))
     return "\n".join(lines)

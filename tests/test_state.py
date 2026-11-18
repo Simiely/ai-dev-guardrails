@@ -58,3 +58,18 @@ def test_handoff_includes_card_and_chapter(tmp_path):
     text = handoff_text(project, "t1")
     assert "项目说明书" in text
     assert "规格与计划" in text
+
+
+def test_handoff_includes_raw_and_trace(tmp_path):
+    project = tmp_path / "project"
+    shutil.copytree(PACK, project)
+    task_file = _task_file(project)
+    init_state(project, "t1", task_file)
+    raw = project / "specs" / "t1" / "raw"
+    raw.mkdir()
+    (raw / "manifest.json").write_text('{"sources": []}', encoding="utf-8")
+    (project / "specs" / "t1" / "trace.yaml").write_text("claims: []\n", encoding="utf-8")
+    text = handoff_text(project, "t1")
+    assert "## Raw Sources" in text
+    assert "## Trace" in text
+    assert "verify-trace --task t1" in text
