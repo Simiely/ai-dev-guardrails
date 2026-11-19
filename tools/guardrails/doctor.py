@@ -82,6 +82,57 @@ def run_doctor(root: Path) -> dict[str, Any]:
         else:
             _check(checks, "PASS", "modules.registry", f"{len(actual)} registered modules")
 
+    layers = {str(item) for item in config.get("layers", [])}
+    modules = [item for item in config.get("modules", []) if isinstance(item, dict)]
+    bad_layers = sorted(
+        {
+            str(module.get("layer"))
+            for module in modules
+            if str(module.get("layer")) not in layers
+        }
+    )
+    if bad_layers:
+        _check(checks, "FAIL", "modules.layers", f"unknown layer(s): {', '.join(bad_layers)}")
+    else:
+        _check(checks, "PASS", "modules.layers", f"{len(layers)} layers")
+
+    missing_paths = [
+        str(module.get("path"))
+        for module in modules
+        if str(module.get("path") or "") and not (root / str(module.get("path"))).exists()
+    ]
+    if missing_paths:
+        _check(checks, "FAIL", "modules.paths", f"missing module path(s): {', '.join(missing_paths)}")
+    else:
+        _check(checks, "PASS", "modules.paths", f"{len(modules)} modules")
+
+    missing_files = []
+    for module in modules:
+        for key in ("contract", "public_path"):
+            value = str(module.get(key) or "")
+            if value and not (root / value).exists():
+                missing_files.append(f"{module.get('name')}.{key}={value}")
+    if missing_files:
+        _check(checks, "FAIL", "modules.files", f"missing contract/public_path: {', '.join(missing_files)}")
+    else:
+        _check(checks, "PASS", "modules.files", "contract/public_path files exist")
+
+    python_cfg = config.get("project", {}).get("python", {})
+    if isinstance(python_cfg, dict):
+        layer_packages = python_cfg.get("layer_packages", {})
+        bad_packages = sorted(
+            str(key) for key in layer_packages if str(key) not in layers
+        ) if isinstance(layer_packages, dict) else []
+        if bad_packages:
+            _check(
+                checks,
+                "FAIL",
+                "python.layer_packages",
+                f"layer_packages keys not in layers: {', '.join(bad_packages)}",
+            )
+        else:
+            _check(checks, "PASS", "python.layer_packages", "layer mapping is valid")
+
     holdout = config.get("holdout")
     if holdout:
         path = root / str(holdout)

@@ -129,6 +129,16 @@ python tools/repo-kit/generate.py --root . --check
 pwsh tools/update-repo-kit.ps1 -Check
 ```
 
+## 发布
+
+1. 更新 `pyproject.toml`、`tools/guardrails/__init__.py`、`CHANGELOG.md` 的版本。
+2. 跑全量检查：`pytest`、`lint-manual`、`sync --check`、`eval-routing`、`verify-trace --all`、repo-kit。
+3. 构建：`python -m build`，确认 wheel 内含 `guardrails/_assets/{pack,schema}`。
+4. 打 tag：`git tag -a v0.6.3 -m "v0.6.3"`。
+5. 推送：`git push origin main --tags`。
+6. PyPI：`twine upload dist/*`（或 trusted publishing）。
+7. 把 `pack/ci/gates.yml` 的安装 tag 更新到新版本。
+
 ## 生长式拆分
 
 | 触发 | 拆分 |

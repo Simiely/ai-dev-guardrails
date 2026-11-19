@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## v0.6.3 — 2026-11-19
+
+### 接入与发布
+
+- `doctor` 校验模块路径、`contract`/`public_path` 文件、模块 layer 引用、`project.python.layer_packages`。
+- `pack/ci/gates.yml` 固定到 `v0.6.3` tag，避免 CI 跟随 main 漂移。
+- README 增加 English Quick Start；DEVELOPMENT 增加发布清单。
+- 版本与 AGENTS 基线同步到 `v0.6.3`。
+
+### 测试
+
+- 新增 doctor 配置校验测试；共 100 个测试。
+
 ## v0.6.2 — 2026-11-18
 
 ### 架构规则

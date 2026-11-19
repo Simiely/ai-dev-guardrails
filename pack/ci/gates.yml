@@ -16,8 +16,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      # 固定到发布 tag；升级时同步修改这里
       - name: Install guardrails
-        run: python -m pip install "git+https://github.com/Simiely/ai-dev-guardrails.git"
+        run: python -m pip install "git+https://github.com/Simiely/ai-dev-guardrails.git@v0.6.3"
 
       - name: Manual lint
         run: guardrails lint-manual

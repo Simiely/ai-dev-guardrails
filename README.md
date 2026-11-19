@@ -62,6 +62,23 @@ guardrails sync
 guardrails doctor
 ```
 
+## Quick start (English)
+
+```bash
+python -m pip install -e /path/to/ai-dev-guardrails
+guardrails init --target . --mode greenfield   # or: --mode brownfield
+guardrails lint-manual
+guardrails sync
+guardrails doctor
+```
+
+For an existing repository use `--mode brownfield`: it copies only the contract layer and manual, and never overwrites existing files by default. The first instruction to the AI is:
+
+```text
+Read AGENTS.md. For every task run `guardrails brief --task specs/<id>`.
+Load only the selected 1-3 chapters. Do not read the whole manual/.
+```
+
 给 AI 的第一句话：
 
 ```text
