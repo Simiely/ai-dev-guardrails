@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## v0.6.4 — 2026-11-19
+
+### 模块与架构
+
+- 新增 `guardrails module new`：从 `project.module_root/_template` 创建模块骨架，跨平台替代 `new-module.ps1` 主路径。
+- `project.module_root` 可配，默认 `modules`。
+- import-linter 生成配置可直接运行：`lint-imports --config .guardrails/importlinter.toml`，不再要求合并到 `pyproject.toml`。
+- CI 模板同步更新 Python 架构检查命令。
+
+### 测试
+
+- 新增 module create 与 CLI 测试；共 106 个测试。
+
 ## v0.6.3 — 2026-11-19
 
 ### 接入与发布

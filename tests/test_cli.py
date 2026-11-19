@@ -72,6 +72,14 @@ def test_cli_task_new(tmp_path, capsys):
     assert "TASK: t1" in capsys.readouterr().out
 
 
+def test_cli_module_new(tmp_path, capsys):
+    project = tmp_path / "project"
+    shutil.copytree(PACK, project)
+    assert main(["--root", str(project), "module", "new", "--name", "order", "--layer", "application"]) == 0
+    assert (project / "modules" / "order" / "MODULE.md").exists()
+    assert "MODULE: order" in capsys.readouterr().out
+
+
 def test_cli_verify_trace_all_empty(tmp_path, capsys):
     assert main(["--root", str(tmp_path), "verify-trace", "--all"]) == 0
     assert "TRACE: PASS" in capsys.readouterr().out

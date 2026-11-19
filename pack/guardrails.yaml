@@ -4,6 +4,8 @@ version: 1
 
 project:
   name: example
+  # 模块模板与新建模块的默认根目录
+  module_root: modules
   languages: [typescript, python]
   # Python 包名不是 <name>.<layer> 时配置：
   # python:

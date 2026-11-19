@@ -18,7 +18,7 @@ jobs:
 
       # 固定到发布 tag；升级时同步修改这里
       - name: Install guardrails
-        run: python -m pip install "git+https://github.com/Simiely/ai-dev-guardrails.git@v0.6.3"
+        run: python -m pip install "git+https://github.com/Simiely/ai-dev-guardrails.git@v0.6.4"
 
       - name: Manual lint
         run: guardrails lint-manual
@@ -32,7 +32,7 @@ jobs:
       # - name: Architecture rules (TypeScript)
       #   run: npx depcruise --config .guardrails/dependency-cruiser.js .
       # - name: Architecture rules (Python)
-      #   run: lint-imports
+      #   run: lint-imports --config .guardrails/importlinter.toml
 
       - name: Affected map
         run: guardrails affected --diff --base origin/${{ github.base_ref || 'main' }}

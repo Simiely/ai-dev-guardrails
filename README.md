@@ -92,6 +92,7 @@ Load only the selected 1-3 chapters. Do not read the whole manual/.
 |---|---|
 | `guardrails init --mode greenfield|brownfield` | 复制 `pack/`；brownfield 只复制契约层和手册 |
 | `guardrails task new --id <id> --title ...` | 生成 `task.yaml`、intent/spec/plan |
+| `guardrails module new --name <name>` | 从 `project.module_root/_template` 创建模块骨架 |
 | `guardrails lint-manual` | 校验常驻卡和 6 个章节 |
 | `guardrails brief --task specs/<id>` | 选 1–3 个章节，输出 manifest、token 预算和 raw sources |
 | `guardrails raw add --task <id> --from <path>` | 把原文复制到 `raw/` 并写入 sha256 manifest |

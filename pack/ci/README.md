@@ -41,8 +41,8 @@ commands:
 # TypeScript
 npx depcruise --config .guardrails/dependency-cruiser.js .
 
-# Python：把 .guardrails/importlinter.toml 合并到 pyproject.toml
-lint-imports
+# Python
+lint-imports --config .guardrails/importlinter.toml
 ```
 
 ## 契约检查

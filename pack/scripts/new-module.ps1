@@ -5,6 +5,12 @@
 
 $ErrorActionPreference = 'Stop'
 
+$cli = Get-Command guardrails -ErrorAction SilentlyContinue
+if ($cli) {
+    & guardrails module new --name $Name
+    exit $LASTEXITCODE
+}
+
 $root = Split-Path -Parent $PSScriptRoot
 $template = Join-Path $root 'modules/_template'
 $target = Join-Path $root "modules/$Name"

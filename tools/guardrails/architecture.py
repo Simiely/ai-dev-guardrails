@@ -118,10 +118,10 @@ def render_architecture_readme(config: dict[str, Any]) -> str:
         lines += [
             "## Python",
             "",
-            "把 `.guardrails/importlinter.toml` 的 `[tool.importlinter]` 段合并到 `pyproject.toml`，然后运行：",
+            "直接用生成的配置运行（`.toml` 会按 TOML 解析）：",
             "",
             "```bash",
-            "lint-imports",
+            "lint-imports --config .guardrails/importlinter.toml",
             "```",
             "",
             "包名不是 `<project>.<layer>` 时，在 `guardrails.yaml` 的 `project.python` 里配置 `root_package` 和 `layer_packages`。",

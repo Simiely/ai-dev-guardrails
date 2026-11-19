@@ -23,6 +23,7 @@ from .init import init_project, next_steps
 from .lint import lint_manual
 from .manual import load_chapters, load_manual
 from .metrics import ingest_junit, metrics_report, record_run, render_metrics
+from .module import create_module
 from .mutation import run_mutation
 from .quality import quality_report
 from .report import build_report, render_report
@@ -69,6 +70,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_task_new.add_argument("--type", default="feature")
     p_task_new.add_argument("--risk", default="R1", choices=["R0", "R1", "R2", "R3"])
     p_task_new.add_argument("--files", nargs="*", default=[])
+
+    p_module = sub.add_parser("module", help="create a module from the template")
+    msub = p_module.add_subparsers(dest="module_command", required=True)
+    p_module_new = msub.add_parser("new")
+    p_module_new.add_argument("--name", required=True)
+    p_module_new.add_argument("--path", default=None)
+    p_module_new.add_argument("--layer", default="")
+    p_module_new.add_argument("--owner", default="")
 
     p_trace = sub.add_parser("verify-trace", help="verify claim sources and hashes")
     p_trace.add_argument("--task", default=None)
@@ -646,6 +655,35 @@ def cmd_task(root: Path, args: argparse.Namespace) -> int:
     raise GuardrailsError("unknown task subcommand")
 
 
+def cmd_module(root: Path, args: argparse.Namespace) -> int:
+    if args.module_command == "new":
+        config = load_config(root)
+        result = create_module(
+            root,
+            config,
+            args.name,
+            path=args.path,
+            layer=args.layer,
+            owner=args.owner,
+        )
+        snippet = result["snippet"]
+        print(f"MODULE: {result['name']} -> {result['path']}")
+        print("next:")
+        print(f"  1. fill {result['path']}/MODULE.md and FLOW.md")
+        print("  2. register in guardrails.yaml (R3, ADR + human approval):")
+        print(f"     - name: {snippet['name']}")
+        print(f"       path: {snippet['path']}")
+        print(f"       layer: {snippet['layer']}")
+        print(f"       owner: {snippet['owner']}")
+        print(f"       contract: {snippet['contract']}")
+        if snippet.get("public_path"):
+            print(f"       public_path: {snippet['public_path']}")
+        else:
+            print(f"       # public_path: {result['path']}/CONTRACT.ts  # 可选：可 import 的公共入口")
+        return 0
+    raise GuardrailsError("unknown module subcommand")
+
+
 def cmd_verify_trace(root: Path, args: argparse.Namespace) -> int:
     if args.all and args.task:
         raise GuardrailsError("use either --task or --all, not both")
@@ -742,6 +780,8 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_brief(root, args)
         if args.command == "task":
             return cmd_task(root, args)
+        if args.command == "module":
+            return cmd_module(root, args)
         if args.command == "verify-trace":
             return cmd_verify_trace(root, args)
         if args.command == "raw":
