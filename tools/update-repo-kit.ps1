@@ -165,9 +165,9 @@ Write-Output ('KIT LOCK: WRITTEN (v' + $version + ', spec=' + $specVersion + ', 
 # 存量仓库最容易踩的一步：已经有手写 AGENTS.md，还没建 schema/agents.template.md。
 # 下一步跑 generate --write 时，生成器会因为无法判断而拒绝写入（2.7.4 起 fail-closed）。
 # 这里提前告知，让人当场做决定，而不是等生成时报错。
-$agentsPath = [System.IO.Path]::Combine([string]$repo, 'AGENTS.md')
-$templatePath = [System.IO.Path]::Combine([string]$repo, 'schema', 'agents.template.md')
-if ($Profile -ne 'link-only' -and -not [string]::IsNullOrEmpty($agentsPath) -and (Test-Path -LiteralPath $agentsPath) -and -not (Test-Path -LiteralPath $templatePath)) {
+$agentsPath = Join-Path $repo 'AGENTS.md'
+$templatePath = [System.IO.Path]::Combine($repo, 'schema', 'agents.template.md')
+if ($Profile -ne 'link-only' -and (Test-Path -LiteralPath $agentsPath) -and -not (Test-Path -LiteralPath $templatePath)) {
     $declared = $true
     $taxPath = [System.IO.Path]::Combine($repo, 'schema', 'taxonomy.json')
     if (Test-Path -LiteralPath $taxPath) {

@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 维护 · 2026-11-19 · 升级 repo-kit 2.9.0（不涉及行为）
+
+- kit 2.8.0 → **2.9.0**；`schema/kit.lock.json` 重写（`spec_version` 2.1.3 → **2.1.4**）
+- 新增能力：`AGENTS_TOO_LONG`（`AGENTS.md` > 150 行报 ERROR）。本仓 51 行，零拦截
+- `generate.py` **未变化**（2.9.0 与 2.8.0 哈希同为 `9874e7f3…`），`GENERATE CHECK: PASS (pages=3)`
+- `schema/taxonomy.json` 的 `version` 同步为 2.9.0（避免 `skew: taxonomy-vs-lock`）
+- 验收：`REPO CHECK: PASS`、`GENERATE CHECK: PASS`、`KIT LOCK: PASS (v2.9.0, spec=2.1.4)`
+
 ## v0.6.4 — 2026-11-19
 
 ### 模块与架构
