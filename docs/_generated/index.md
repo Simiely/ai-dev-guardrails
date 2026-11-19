@@ -29,6 +29,7 @@ related: []
 | 页面 | kind | status | owner | tier | source |
 |---|---|---|---|---|---|
 | [文档索引](../index.md) | index | active | @simiely | normal | `README.md` |
+| [仓库结构：顶层目录各自负责什么](../仓库结构.md) | note | active | @simiely | normal | `README.md` |
 
 ### explanation
 
@@ -43,3 +44,4 @@ related: []
 | `docs.index` | [文档索引](../index.md) | reference | index | active |
 | `guide.framework` | [架构契约层：常驻卡、显式路由与渐进披露](../框架设计.md) | explanation | note | active |
 | `guide.usage` | [使用指南：装 CLI、填契约、跑第一个任务](../使用指南.md) | how-to | note | active |
+| `repo.layout` | [仓库结构：顶层目录各自负责什么](../仓库结构.md) | reference | note | active |

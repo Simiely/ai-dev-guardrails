@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 维护 · 2026-11-19 · 拆 README（212 → 140 行，门面 + 子页）
+
+- `README.md` 212 → **140 行**：本页独有的整段内容搬进有归属的子页，别处已有的只留指针
+  - 「手册模型」「任务模型」的目录树 → [docs/框架设计.md](docs/框架设计.md) 的「中区：手册编译器 + 显式路由」与「原文、派生与生成」
+  - 「仓库结构」→ 新页 [docs/仓库结构.md](docs/仓库结构.md)（带 frontmatter，`id: repo.layout`）
+  - 「证据」的 7 篇 arXiv 原始链接 → 框架设计「参考来源」；`README` 只留一行指针
+  - 26 条命令表 → [docs/使用指南.md](docs/使用指南.md) 新增「10. 命令速查」，成为唯一权威表；
+    `README` 只写日常六条回路（`init` / `brief` / `lint-manual` / `sync` / `doctor` / `verify-trace`），**不再复制表格**
+    （理由：本仓铁律是「同一清单只允许一个权威位置」，第三份副本必然漂移）
+- 新增「文档导航」表；`docs/index.md` 与生成索引同步收录新页
+- `AGENTS.md` 的「当前规模」由 `generate.py --write` 更新（页面 3 → 4、reference 1 → 2），其余手写内容未动
+- 验收：`REPO CHECK: PASS (ERROR=0, WARN=0, pages=4)`、`GENERATE CHECK: PASS (pages=4)`
+
 ## 维护 · 2026-11-19 · 升级 repo-kit 2.9.0（不涉及行为）
 
 - kit 2.8.0 → **2.9.0**；`schema/kit.lock.json` 重写（`spec_version` 2.1.3 → **2.1.4**）

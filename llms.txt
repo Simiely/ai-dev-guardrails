@@ -17,6 +17,7 @@
 ### reference
 
 - [文档索引](./docs/index.md) — ai-dev-guardrails 的人工导航；生成索引见 _generated/index.md。
+- [仓库结构：顶层目录各自负责什么](./docs/仓库结构.md) — 顶层目录逐项说明——门面文件、方法论文档、可复制模板包 pack/、schema 与机器层工具的分工。
 
 ### explanation
 

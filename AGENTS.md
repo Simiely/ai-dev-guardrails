@@ -41,8 +41,8 @@ pwsh tools/update-repo-kit.ps1 -Check
 
 ## 当前规模
 
-- 页面：3（critical=2）
-- 按 type：explanation=1, how-to=1, reference=1
+- 页面：4（critical=2）
+- 按 type：explanation=1, how-to=1, reference=2
 - 词表版本：2.9.0
 
 ## 边界

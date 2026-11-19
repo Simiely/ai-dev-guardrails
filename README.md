@@ -88,92 +88,16 @@ Load only the selected 1-3 chapters. Do not read the whole manual/.
 
 ## 常用命令
 
-| 命令 | 作用 |
-|---|---|
-| `guardrails init --mode greenfield|brownfield` | 复制 `pack/`；brownfield 只复制契约层和手册 |
-| `guardrails task new --id <id> --title ...` | 生成 `task.yaml`、intent/spec/plan |
-| `guardrails module new --name <name>` | 从 `project.module_root/_template` 创建模块骨架 |
-| `guardrails lint-manual` | 校验常驻卡和 6 个章节 |
-| `guardrails brief --task specs/<id>` | 选 1–3 个章节，输出 manifest、token 预算和 raw sources |
-| `guardrails raw add --task <id> --from <path>` | 把原文复制到 `raw/` 并写入 sha256 manifest |
-| `guardrails verify-trace --task <id>` / `--all` | 校验 trace.yaml 的原文引用、sha256 和 commit |
-| `guardrails eval-routing` | 测 routing recall / zero-load / over-load |
-| `guardrails sync` | 生成 AGENTS / Claude / Kiro / Cursor 视图 + `.guardrails/` 架构规则 |
-| `guardrails sync --check` | CI 检查生成视图/规则是否过期 |
-| `guardrails sync --force` | 覆盖没有 generated 标记的同名文件 |
-| `guardrails affected --diff` | 源码↔测试图，列出受影响测试 |
-| `guardrails test-lock --task <id>` | red 后锁定测试文件 |
-| `guardrails test-check --task <id>` | 检查测试是否被改动 |
-| `guardrails test-approve --task <id> --reason ...` | 批准测试改动，改完重新 lock |
-| `guardrails quality --diff --fail-on` | 复杂度、函数长度、重复块 |
-| `guardrails mutation --diff` | 只对改动文件跑项目 mutation 命令 |
-| `guardrails state init/show/next/handoff` | 任务状态与压缩恢复 |
-| `guardrails report` | 结构信号 + 本地运行指标 |
-| `guardrails metrics record/ingest-junit/report` | 记录运行结果、导入 JUnit、看通过率/失败率/返工率 |
-| `guardrails canary` | 跑 canary 套件，对比基线，识别回归 |
-| `guardrails card --task <id>` | 生成后果卡 |
-| `guardrails contract snapshot/diff` | 契约快照与破坏性变更检测 |
-| `guardrails risk --diff` | R0–R3 风险分级 |
-| `guardrails doctor` | 检查配置、手册、视图、命令、CI、hooks |
-| `guardrails hook --event pre-tool` | Claude Code hook：拦截保护路径、锁定测试和破坏性命令 |
-| `guardrails run <name>` | 跑 `guardrails.yaml` 里的真实命令 |
+日常回路只有六条：`init` → `brief` →（改代码）→ `lint-manual` → `sync` → `doctor`；要证明结论仍指向原文时加 `verify-trace`。
+完整的 26 条命令表（含 `task new`、`module new`、`raw add`、`eval-routing`、`affected`、`test-lock`、`quality`、
+`mutation`、`state`、`metrics`、`canary`、`card`、`contract`、`risk`、`hook`、`run` …）在 [使用指南](docs/使用指南.md)
+的「10. 命令速查」——那里是唯一权威表，本页不复制。
 
-## 手册模型
+## 手册与任务模型
 
-```text
-manual/
-├── 00-card.md                 # 常驻：目标、红线、路由表、状态、命令（≤80 行）
-└── chapters/
-    ├── intake/SKILL.md        # 分类 / 风险 / 预算
-    ├── context/SKILL.md       # 最小上下文 / manifest
-    ├── change/SKILL.md        # intent / spec / plan / trace
-    ├── tdd/SKILL.md           # 红-绿-重构 / 测试托管
-    ├── verify/SKILL.md        # 门禁 / 契约 diff / 风险
-    └── review/SKILL.md        # 后果卡 / ADR / 回滚 / 发布
-```
-
-规则：
-
-- 章节上限 6 个；每任务加载上限 3 个。
-- 每个章节必须有 `description`、`when_to_use`、`when_not_to_use`。
-- 每个章节有 token 预算；超预算就拆到 `references/` 或删。
-- 常驻卡不放流程，只放红线、路由和命令。
-
-## 任务模型
-
-```text
-specs/<id>/
-├── raw/              # 原文层：只读，manifest.json 记录 sha256
-├── task.yaml         # id / type / goal / files / risk
-├── intent.md         # 派生层：AI 可写
-├── spec.md           # 派生层：AI 可写
-├── plan.md           # 派生层：AI 可写
-├── trace.yaml        # acceptance → 测试；claims → 原文
-├── state.json        # 当前步骤 / 已读章节 / 下一步
-└── evidence.json     # 门禁结果
-```
-
-`guardrails state handoff` 会恢复卡 + 当前章节 + state + raw manifest + trace；压缩后按原文回读，不依赖 AI 自己的摘要。
-
-## 仓库结构
-
-```text
-ai-dev-guardrails/
-├── README.md            门面
-├── AGENTS.md            本仓库维护规则
-├── DEVELOPMENT.md       本仓库架构与关键问题
-├── docs/                方法论文档（frontmatter + 生成索引）
-├── pack/                可复制模板包
-│   ├── manual/          常驻卡 + 6 个章节（唯一源）
-│   ├── guardrails.yaml  架构契约配置
-│   ├── templates/       task / intent / spec / plan / trace 模板
-│   ├── specs/           任务目录约定（raw / trace / state）
-│   ├── eval/routing/    routing 基准
-│   └── ci/gates.yml     真实 CI 门禁
-├── schema/              内容契约与配置 schema
-├── tools/guardrails/    CLI：lint / brief / sync / contract / risk / doctor / trace
-└── tools/repo-kit/      文档检查与生成
-```
+- **手册**：`manual/00-card.md`（常驻卡）+ `chapters/*/SKILL.md`（6 个章节）的目录形态与四条硬约束 → [框架设计](docs/框架设计.md) 的「中区：手册编译器 + 显式路由」
+- **任务**：`specs/<id>/` 里 raw / task.yaml / intent / spec / plan / trace / state / evidence 各归哪一层 → [框架设计](docs/框架设计.md) 的「原文、派生与生成」
+- **仓库结构**：顶层目录逐项说明 → [docs/仓库结构.md](docs/仓库结构.md)
 
 ## 验证
 
@@ -200,12 +124,16 @@ pwsh tools/update-repo-kit.ps1 -Check
 
 ## 证据
 
-设计与证据边界见 [框架设计](docs/框架设计.md)。关键来源：
+设计与证据边界（强对照 / 实践工具 / 弱预印本三档）见 [框架设计](docs/框架设计.md) 的「证据强度」；7 篇 arXiv 原始链接见该页「参考来源」。
 
-- [Lost in Implicit Routing](https://arxiv.org/abs/2610.18522)
-- [SkillsBench](https://arxiv.org/abs/2602.12670)
-- [What Keeps Agent Skills from Being Reusable?](https://arxiv.org/abs/2608.08453)
-- [SkillJuror](https://arxiv.org/abs/2606.11543)
-- [Guardrails Beat Guidance](https://arxiv.org/abs/2604.11088)
-- [TDAD](https://arxiv.org/abs/2603.17973)
-- [SpecBench](https://arxiv.org/abs/2605.21384)
+## 文档导航
+
+| 文档 | 类型 | 内容 |
+|---|---|---|
+| [docs/仓库结构.md](docs/仓库结构.md) | reference | 顶层目录逐项说明 |
+| [docs/框架设计.md](docs/框架设计.md) | explanation | 三层结构、手册与任务模型、证据强度与边界 |
+| [docs/使用指南.md](docs/使用指南.md) | how-to | 从安装到第一个任务，含完整命令速查 |
+| [docs/index.md](docs/index.md) | index | 人工导航；生成索引在 `docs/_generated/` |
+| [AGENTS.md](AGENTS.md) | — | AI / 维护者入口与写作约定 |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | — | 本仓库自身架构与关键问题 |
+| [CHANGELOG.md](CHANGELOG.md) | — | 版本变更 |
