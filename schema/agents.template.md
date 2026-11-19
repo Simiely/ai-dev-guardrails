@@ -1,6 +1,6 @@
 # AGENTS.md · ai-dev-guardrails 项目规则
 
-> 📌 **文档基线**：2026-11-19 · v0.6.4（原文/派生/生成、brownfield init、verify-trace、按任务测试锁、public_path、module new）
+> 📌 **文档基线**：2026-11-19（commit `9445a30`）· v0.6.4（原文/派生/生成、brownfield init、verify-trace、按任务测试锁、public_path、module new）
 > **更新文档后请更新此行**（日期 + 版本），并在 CHANGELOG 追加版本
 
 本仓库维护一套 AI 编程约束框架和可复制模板包。回答相关问题前先读这份，再读 [docs/index.md](docs/index.md)。
